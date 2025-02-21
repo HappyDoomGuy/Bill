@@ -160,8 +160,9 @@
       const scriptURL = 'https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec';
       fetch(scriptURL, {
         method: 'POST',
+        // Используем text/plain вместо application/json, чтобы избежать preflight-запроса
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'text/plain'
         },
         body: JSON.stringify(data)
       })
