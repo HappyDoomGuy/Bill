@@ -4,13 +4,15 @@
   <meta charset="UTF-8">
   <title>Новая рассрочка</title>
   <style>
-    /* Стили для формы */
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    h2 {
-      text-align: center;
+    /* Стили для формы (ранее была в модальном окне) */
+    .form-container {
+      margin: 20px auto;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      background-color: #fefefe;
+      border: 1px solid #888;
+      border-radius: 8px;
     }
     .form-group {
       margin-bottom: 15px;
@@ -34,58 +36,58 @@
       border: none;
       cursor: pointer;
       border-radius: 4px;
-      display: block;
-      margin: 0 auto;
     }
   </style>
 </head>
 <body>
-  <h2>Новая рассрочка</h2>
-  <form id="installmentForm">
-    <div class="form-group">
-      <label for="product">Товар</label>
-      <input type="text" id="product" name="product" required>
-    </div>
-    <div class="form-group">
-      <label for="company">Контора</label>
-      <input type="text" id="company" name="company" required>
-    </div>
-    <div class="form-group">
-      <label for="total">Общая сумма</label>
-      <input type="number" step="0.01" id="total" name="total" required>
-    </div>
-    <div class="form-group">
-      <label for="monthly">Ежемесячная выплата</label>
-      <input type="number" step="0.01" id="monthly" name="monthly" required>
-    </div>
-    <div class="form-group">
-      <label for="installments">Количество выплат</label>
-      <input type="number" id="installments" name="installments" required>
-    </div>
-    <div class="form-group">
-      <label for="firstDate">Дата первой выплаты (дд.мм.гггг)</label>
-      <input type="text" id="firstDate" name="firstDate" placeholder="например, 15.03.2025" required>
-    </div>
-    <!-- Показ рассчитанных значений -->
-    <div class="form-group">
-      <label>Дата закрытия рассрочки</label>
-      <input type="text" id="endDate" class="readonly" readonly>
-    </div>
-    <div class="form-group">
-      <label>Остаток долга</label>
-      <input type="text" id="remainder" class="readonly" readonly>
-    </div>
-    <button type="submit" id="submitBtn">Сохранить</button>
-  </form>
+  <div class="form-container">
+    <h2>Новая рассрочка</h2>
+    <form id="installmentForm">
+      <div class="form-group">
+        <label for="product">Товар</label>
+        <input type="text" id="product" name="product" required>
+      </div>
+      <div class="form-group">
+        <label for="company">Контора</label>
+        <input type="text" id="company" name="company" required>
+      </div>
+      <div class="form-group">
+        <label for="total">Общая сумма</label>
+        <input type="number" step="0.01" id="total" name="total" required>
+      </div>
+      <div class="form-group">
+        <label for="monthly">Ежемесячная выплата</label>
+        <input type="number" step="0.01" id="monthly" name="monthly" required>
+      </div>
+      <div class="form-group">
+        <label for="installments">Количество выплат</label>
+        <input type="number" id="installments" name="installments" required>
+      </div>
+      <div class="form-group">
+        <label for="firstDate">Дата первой выплаты (дд.мм.гггг)</label>
+        <input type="text" id="firstDate" name="firstDate" placeholder="например, 15.03.2025" required>
+      </div>
+      <!-- Показ рассчитанных значений -->
+      <div class="form-group">
+        <label>Дата закрытия рассрочки</label>
+        <input type="text" id="endDate" class="readonly" readonly>
+      </div>
+      <div class="form-group">
+        <label>Остаток долга</label>
+        <input type="text" id="remainder" class="readonly" readonly>
+      </div>
+      <button type="submit" id="submitBtn">Сохранить</button>
+    </form>
+  </div>
 
   <script>
-    // URL вашего Google Apps Script для записи в Google Таблицу
+    // URL вашего Google Apps Script, который будет записывать данные в таблицу
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec";
 
     // Функция для парсинга даты в формате дд.мм.гггг
     function parseDate(str) {
       const parts = str.split('.');
-      if (parts.length !== 3) return null;
+      if(parts.length !== 3) return null;
       const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1;
       const year = parseInt(parts[2], 10);
@@ -104,33 +106,38 @@
     function addMonths(date, months) {
       const d = new Date(date);
       d.setMonth(d.getMonth() + months);
+      // Если день месяца изменился, поправляем
       if (d.getDate() !== date.getDate()) {
         d.setDate(0);
       }
       return d;
     }
 
-    // Обновление рассчитанных значений (дата закрытия и остаток долга)
+    // Функция для обновления рассчитанных значений
     function updateCalculatedFields() {
       const total = parseFloat(document.getElementById('total').value);
       const installments = parseInt(document.getElementById('installments').value, 10);
       const firstDateStr = document.getElementById('firstDate').value;
       const firstDate = parseDate(firstDateStr);
-
+      
+      // Если необходимых значений нет или дата не распознана — очищаем поля
       if (isNaN(total) || isNaN(installments) || !firstDate) {
         document.getElementById('endDate').value = '';
         document.getElementById('remainder').value = '';
         return;
       }
-
+      
+      // Рассчитываем дату закрытия (дата первой выплаты + (количество выплат - 1) месяцев)
       const endDate = addMonths(firstDate, installments - 1);
       document.getElementById('endDate').value = formatDate(endDate);
-      // Остаток долга равен общей сумме, так как платежи ещё не начаты
+      
+      // Остаток долга должен записываться как Общая сумма (поскольку платежи еще не начаты)
       document.getElementById('remainder').value = total.toFixed(2);
     }
 
-    // Добавляем обработчики для пересчёта при изменении значений
-    ['total', 'installments', 'firstDate'].forEach(id => {
+    // Добавляем обработчики на изменение полей для пересчёта
+    const inputsToWatch = ['total', 'installments', 'firstDate'];
+    inputsToWatch.forEach(id => {
       document.getElementById(id).addEventListener('input', updateCalculatedFields);
     });
 
@@ -138,6 +145,7 @@
     document.getElementById('installmentForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
+      // Получаем значения полей
       const product = document.getElementById('product').value;
       const company = document.getElementById('company').value;
       const total = parseFloat(document.getElementById('total').value);
@@ -150,8 +158,10 @@
         return;
       }
       const endDate = addMonths(firstDate, installments - 1);
+      // Остаток долга равен общей сумме
       const remainder = total;
 
+      // Формируем объект с данными
       const data = {
         "Товар": product,
         "Контора": company,
@@ -163,6 +173,7 @@
         "Остаток долга": remainder.toFixed(2)
       };
 
+      // Отправка данных методом POST через fetch
       fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -173,6 +184,7 @@
       })
       .then(() => {
         alert("Данные успешно отправлены!");
+        // Можно очистить форму
         document.getElementById('installmentForm').reset();
         updateCalculatedFields();
       })
