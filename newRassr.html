@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Новая рассрочка</title>
   <style>
-    /* Стили для формы (ранее была в модальном окне) */
     .form-container {
       margin: 20px auto;
       padding: 20px;
@@ -29,6 +28,12 @@
     .readonly {
       background-color: #e9ecef;
     }
+    /* Группа кнопок располагается в строку */
+    .button-group {
+      display: flex;
+      align-items: center;
+    }
+    /* Кнопка отправки */
     #submitBtn {
       padding: 10px 20px;
       background-color: #28a745;
@@ -36,6 +41,16 @@
       border: none;
       cursor: pointer;
       border-radius: 4px;
+    }
+    /* Кнопка Назад (красного цвета) */
+    #backBtn {
+      padding: 10px 20px;
+      background-color: red;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-left: 10px;
     }
   </style>
 </head>
@@ -67,7 +82,6 @@
         <label for="firstDate">Дата первой выплаты (дд.мм.гггг)</label>
         <input type="text" id="firstDate" name="firstDate" placeholder="например, 15.03.2025" required>
       </div>
-      <!-- Показ рассчитанных значений -->
       <div class="form-group">
         <label>Дата закрытия рассрочки</label>
         <input type="text" id="endDate" class="readonly" readonly>
@@ -76,15 +90,17 @@
         <label>Остаток долга</label>
         <input type="text" id="remainder" class="readonly" readonly>
       </div>
-      <button type="submit" id="submitBtn">Сохранить</button>
+      <!-- Группа кнопок: Отправить и Назад -->
+      <div class="form-group button-group">
+        <button type="submit" id="submitBtn">Сохранить</button>
+        <button type="button" id="backBtn">Назад</button>
+      </div>
     </form>
   </div>
-
+  
   <script>
-    // URL вашего Google Apps Script, который будет записывать данные в таблицу
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec";
 
-    // Функция для парсинга даты в формате дд.мм.гггг
     function parseDate(str) {
       const parts = str.split('.');
       if(parts.length !== 3) return null;
@@ -94,7 +110,6 @@
       return new Date(year, month, day);
     }
 
-    // Функция для форматирования даты в формат дд.мм.гггг
     function formatDate(date) {
       const day = ("0" + date.getDate()).slice(-2);
       const month = ("0" + (date.getMonth() + 1)).slice(-2);
@@ -102,50 +117,40 @@
       return `${day}.${month}.${year}`;
     }
 
-    // Функция для добавления месяцев к дате
     function addMonths(date, months) {
       const d = new Date(date);
       d.setMonth(d.getMonth() + months);
-      // Если день месяца изменился, поправляем
       if (d.getDate() !== date.getDate()) {
         d.setDate(0);
       }
       return d;
     }
 
-    // Функция для обновления рассчитанных значений
     function updateCalculatedFields() {
       const total = parseFloat(document.getElementById('total').value);
       const installments = parseInt(document.getElementById('installments').value, 10);
       const firstDateStr = document.getElementById('firstDate').value;
       const firstDate = parseDate(firstDateStr);
       
-      // Если необходимых значений нет или дата не распознана — очищаем поля
       if (isNaN(total) || isNaN(installments) || !firstDate) {
         document.getElementById('endDate').value = '';
         document.getElementById('remainder').value = '';
         return;
       }
       
-      // Рассчитываем дату закрытия (дата первой выплаты + (количество выплат - 1) месяцев)
       const endDate = addMonths(firstDate, installments - 1);
       document.getElementById('endDate').value = formatDate(endDate);
-      
-      // Остаток долга должен записываться как Общая сумма (поскольку платежи еще не начаты)
       document.getElementById('remainder').value = total.toFixed(2);
     }
 
-    // Добавляем обработчики на изменение полей для пересчёта
     const inputsToWatch = ['total', 'installments', 'firstDate'];
     inputsToWatch.forEach(id => {
       document.getElementById(id).addEventListener('input', updateCalculatedFields);
     });
 
-    // Обработка отправки формы
     document.getElementById('installmentForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
-      // Получаем значения полей
       const product = document.getElementById('product').value;
       const company = document.getElementById('company').value;
       const total = parseFloat(document.getElementById('total').value);
@@ -158,10 +163,8 @@
         return;
       }
       const endDate = addMonths(firstDate, installments - 1);
-      // Остаток долга равен общей сумме
       const remainder = total;
 
-      // Формируем объект с данными
       const data = {
         "Товар": product,
         "Контора": company,
@@ -173,7 +176,6 @@
         "Остаток долга": remainder.toFixed(2)
       };
 
-      // Отправка данных методом POST через fetch
       fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -184,7 +186,6 @@
       })
       .then(() => {
         alert("Данные успешно отправлены!");
-        // Можно очистить форму
         document.getElementById('installmentForm').reset();
         updateCalculatedFields();
       })
@@ -192,6 +193,11 @@
         console.error("Ошибка при отправке данных:", error);
         alert("Ошибка при отправке данных.");
       });
+    });
+
+    // Обработчик кнопки Назад: перенаправление на главную страницу (index.html)
+    document.getElementById('backBtn').addEventListener('click', function() {
+      window.location.href = 'index.html';
     });
   </script>
 </body>
