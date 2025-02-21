@@ -164,26 +164,26 @@
 
     // Функция для отправки данных в Google Таблицу
     function sendDataToGoogleSheet(data) {
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec'; // Замените на URL вашего Google Apps Script
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec';
 
-      fetch(scriptURL, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log('Данные успешно отправлены:', data);
-        closeModal();
-        alert('Данные успешно сохранены!');
-      })
-      .catch((error) => {
-        console.error('Ошибка:', error);
-        alert('Произошла ошибка при отправке данных.');
-      });
-    }
+    fetch(scriptURL, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Данные успешно отправлены:', data);
+      closeModal();
+      alert('Данные успешно сохранены!');
+    })
+    .catch((error) => {
+      console.error('Ошибка:', error);
+      alert('Произошла ошибка при отправке данных.');
+    });
+  }
   </script>
 </body>
 </html>
