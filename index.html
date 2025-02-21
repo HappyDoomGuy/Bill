@@ -171,13 +171,13 @@
       body: JSON.stringify(data),
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      mode: 'no-cors' // Отключаем проверку CORS
     })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Данные успешно отправлены:', data);
+    .then(() => {
+      console.log('Запрос отправлен (но ответ недоступен)');
       closeModal();
-      alert('Данные успешно сохранены!');
+      alert('Данные отправлены!');
     })
     .catch((error) => {
       console.error('Ошибка:', error);
