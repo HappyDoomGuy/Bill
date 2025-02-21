@@ -18,7 +18,6 @@
       background-color: rgba(0, 0, 0, 0.4);
       padding-top: 60px;
     }
-
     .modal-content {
       background-color: #fefefe;
       margin: 5% auto;
@@ -28,7 +27,6 @@
       max-width: 500px;
       border-radius: 10px;
     }
-
     .close {
       color: #aaa;
       float: right;
@@ -36,16 +34,13 @@
       font-weight: bold;
       cursor: pointer;
     }
-
     .close:hover {
       color: black;
     }
-
     label {
       display: block;
       margin-top: 10px;
     }
-
     input {
       width: 100%;
       padding: 8px;
@@ -53,7 +48,6 @@
       border: 1px solid #ccc;
       border-radius: 4px;
     }
-
     button {
       margin-top: 20px;
       padding: 10px 20px;
@@ -63,7 +57,6 @@
       border-radius: 4px;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #45a049;
     }
@@ -119,7 +112,7 @@
       document.getElementById('myModal').style.display = 'none';
     }
 
-    // Функция для расчета даты закрытия и остатка долга
+    // Функция для расчета даты закрытия рассрочки и остатка долга
     function calculateAndSubmit() {
       const totalAmount = parseFloat(document.getElementById('totalAmount').value);
       const monthlyPayment = parseFloat(document.getElementById('monthlyPayment').value);
@@ -132,14 +125,14 @@
         return;
       }
 
-      // Рассчет даты закрытия рассрочки
+      // Расчет даты закрытия рассрочки
       const [day, month, year] = firstPaymentDate.split('.');
       const firstPaymentDateObj = new Date(`${year}-${month}-${day}`);
       const closingDateObj = new Date(firstPaymentDateObj);
       closingDateObj.setMonth(closingDateObj.getMonth() + numberOfPayments);
       const closingDate = `${closingDateObj.getDate().toString().padStart(2, '0')}.${(closingDateObj.getMonth() + 1).toString().padStart(2, '0')}.${closingDateObj.getFullYear()}`;
 
-      // Рассчет остатка долга
+      // Расчет остатка долга
       const remainingDebt = totalAmount - (monthlyPayment * (numberOfPayments - 1));
 
       // Заполнение полей
@@ -158,32 +151,31 @@
         remainingDebt: remainingDebt.toFixed(2)
       };
 
-      // Отправка данных в Google Таблицу
+      // Отправка данных на сервер
       sendDataToGoogleSheet(data);
     }
 
-    // Функция для отправки данных в Google Таблицу
+    // Функция для отправки данных на сервер (Google Apps Script)
     function sendDataToGoogleSheet(data) {
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec';
-
-    fetch(scriptURL, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      mode: 'no-cors' // Отключаем проверку CORS
-    })
-    .then(() => {
-      console.log('Запрос отправлен (но ответ недоступен)');
-      closeModal();
-      alert('Данные отправлены!');
-    })
-    .catch((error) => {
-      console.error('Ошибка:', error);
-      alert('Произошла ошибка при отправке данных.');
-    });
-  }
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec';
+      fetch(scriptURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(responseData => {
+        console.log('Успех:', responseData);
+        closeModal();
+        alert('Данные отправлены!');
+      })
+      .catch((error) => {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при отправке данных.');
+      });
+    }
   </script>
 </body>
 </html>
