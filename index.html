@@ -171,13 +171,12 @@
     // Функция для обновления рассчитанных значений
     function updateCalculatedFields() {
       const total = parseFloat(document.getElementById('total').value);
-      const monthly = parseFloat(document.getElementById('monthly').value);
       const installments = parseInt(document.getElementById('installments').value, 10);
       const firstDateStr = document.getElementById('firstDate').value;
       const firstDate = parseDate(firstDateStr);
       
       // Если необходимых значений нет или дата не распознана — очищаем поля
-      if (isNaN(total) || isNaN(monthly) || isNaN(installments) || !firstDate) {
+      if (isNaN(total) || isNaN(installments) || !firstDate) {
         document.getElementById('endDate').value = '';
         document.getElementById('remainder').value = '';
         return;
@@ -187,15 +186,12 @@
       const endDate = addMonths(firstDate, installments - 1);
       document.getElementById('endDate').value = formatDate(endDate);
       
-      // Рассчитываем остаток долга = Общая сумма - (ежемесячная выплата * (количество выплат - 1))
-      let remainder = total - (monthly * (installments - 1));
-      // Если остаток больше или равен ежемесячной выплате, то можно считать, что последний платеж равен ежемесячной выплате
-      // Но если сумма делится не ровно, последний платеж = остаток
-      document.getElementById('remainder').value = remainder.toFixed(2);
+      // Остаток долга должен записываться как Общая сумма (поскольку платежи еще не начаты)
+      document.getElementById('remainder').value = total.toFixed(2);
     }
 
     // Добавляем обработчики на изменение полей для пересчёта
-    const inputsToWatch = ['total', 'monthly', 'installments', 'firstDate'];
+    const inputsToWatch = ['total', 'installments', 'firstDate'];
     inputsToWatch.forEach(id => {
       document.getElementById(id).addEventListener('input', updateCalculatedFields);
     });
@@ -217,7 +213,8 @@
         return;
       }
       const endDate = addMonths(firstDate, installments - 1);
-      const remainder = total - (monthly * (installments - 1));
+      // Остаток долга равен общей сумме
+      const remainder = total;
 
       // Формируем объект с данными
       const data = {
@@ -234,7 +231,7 @@
       // Отправка данных методом POST через fetch
       fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // если требуется обход CORS (зависит от настроек Google Apps Script)
+        mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json'
         },
