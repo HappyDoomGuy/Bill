@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Управление рассрочками</title>
+  <style>
+    /* Стили для модального окна */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.4);
+      padding-top: 60px;
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 10px;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: black;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Кнопка для открытия модального окна -->
+  <button onclick="openModal()">Создать новую рассрочку</button>
+
+  <!-- Модальное окно -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <form id="installmentForm">
+        <label for="product">Товар:</label>
+        <input type="text" id="product" name="product" required>
+
+        <label for="company">Контора:</label>
+        <input type="text" id="company" name="company" required>
+
+        <label for="totalAmount">Общая сумма:</label>
+        <input type="number" id="totalAmount" name="totalAmount" required>
+
+        <label for="monthlyPayment">Ежемесячная выплата:</label>
+        <input type="number" id="monthlyPayment" name="monthlyPayment" required>
+
+        <label for="numberOfPayments">Количество выплат:</label>
+        <input type="number" id="numberOfPayments" name="numberOfPayments" required>
+
+        <label for="firstPaymentDate">Дата первой выплаты (дд.мм.гггг):</label>
+        <input type="text" id="firstPaymentDate" name="firstPaymentDate" placeholder="дд.мм.гггг" required>
+
+        <label for="closingDate">Дата закрытия рассрочки:</label>
+        <input type="text" id="closingDate" name="closingDate" readonly>
+
+        <label for="remainingDebt">Остаток долга:</label>
+        <input type="text" id="remainingDebt" name="remainingDebt" readonly>
+
+        <button type="button" onclick="calculateAndSubmit()">Сохранить</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Функция для открытия модального окна
+    function openModal() {
+      document.getElementById('myModal').style.display = 'block';
+    }
+
+    // Функция для закрытия модального окна
+    function closeModal() {
+      document.getElementById('myModal').style.display = 'none';
+    }
+
+    // Функция для расчета даты закрытия и остатка долга
+    function calculateAndSubmit() {
+      const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+      const monthlyPayment = parseFloat(document.getElementById('monthlyPayment').value);
+      const numberOfPayments = parseInt(document.getElementById('numberOfPayments').value);
+      const firstPaymentDate = document.getElementById('firstPaymentDate').value;
+
+      // Проверка корректности данных
+      if (isNaN(totalAmount) || isNaN(monthlyPayment) || isNaN(numberOfPayments) || !firstPaymentDate) {
+        alert('Пожалуйста, заполните все поля корректно.');
+        return;
+      }
+
+      // Рассчет даты закрытия рассрочки
+      const [day, month, year] = firstPaymentDate.split('.');
+      const firstPaymentDateObj = new Date(`${year}-${month}-${day}`);
+      const closingDateObj = new Date(firstPaymentDateObj);
+      closingDateObj.setMonth(closingDateObj.getMonth() + numberOfPayments);
+      const closingDate = `${closingDateObj.getDate().toString().padStart(2, '0')}.${(closingDateObj.getMonth() + 1).toString().padStart(2, '0')}.${closingDateObj.getFullYear()}`;
+
+      // Рассчет остатка долга
+      const remainingDebt = totalAmount - (monthlyPayment * (numberOfPayments - 1));
+
+      // Заполнение полей
+      document.getElementById('closingDate').value = closingDate;
+      document.getElementById('remainingDebt').value = remainingDebt.toFixed(2);
+
+      // Подготовка данных для отправки
+      const data = {
+        product: document.getElementById('product').value,
+        company: document.getElementById('company').value,
+        totalAmount: totalAmount,
+        monthlyPayment: monthlyPayment,
+        numberOfPayments: numberOfPayments,
+        firstPaymentDate: firstPaymentDate,
+        closingDate: closingDate,
+        remainingDebt: remainingDebt.toFixed(2)
+      };
+
+      // Отправка данных в Google Таблицу
+      sendDataToGoogleSheet(data);
+    }
+
+    // Функция для отправки данных в Google Таблицу
+    function sendDataToGoogleSheet(data) {
+      const scriptURL = 'YOUR_GOOGLE_APPS_SCRIPT_URL'; // Замените на URL вашего Google Apps Script
+
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Данные успешно отправлены:', data);
+        closeModal();
+        alert('Данные успешно сохранены!');
+      })
+      .catch((error) => {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при отправке данных.');
+      });
+    }
+  </script>
+</body>
+</html>
