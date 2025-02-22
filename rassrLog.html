@@ -77,6 +77,19 @@
   </style>
 </head>
 <body>
+  <!-- Фиктивное определение объекта google для JSONP -->
+  <script>
+    window.google = {
+      visualization: {
+        Query: {
+          setResponse: function(response) {
+            handleData(response);
+          }
+        }
+      }
+    };
+  </script>
+  
   <h1>Мои рассрочки</h1>
   <div class="table-container">
     <table id="installmentsTable">
@@ -96,7 +109,7 @@
   </div>
 
   <script>
-    // Функция, которая будет вызвана сервером (JSONP)
+    // JSONP callback для обработки данных из Google Таблицы
     function handleData(response) {
       if (!response || !response.table) {
         console.error("Ошибка: Нет данных в ответе");
@@ -115,7 +128,7 @@
       populateTable(data);
     }
 
-    // Функция для заполнения таблицы нужными данными
+    // Функция для заполнения таблицы данными
     function populateTable(data) {
       var tbody = document.querySelector('#installmentsTable tbody');
       tbody.innerHTML = "";
@@ -125,7 +138,7 @@
         var общаяСумма = parseFloat(row["Общая сумма рассрочки"]) || 0;
         var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
-        // Ближайшая выплата – минимальное значение между ежемесячной выплатой и остатком
+        // Ближайшая выплата – минимальное значение между ежемесячной выплатой и остатком долга
         var суммаБлижайшей = Math.min(ежемесячная, остаток);
         суммаБлижайшей = isNaN(суммаБлижайшей) ? 0 : суммаБлижайшей;
         var tr = document.createElement('tr');
@@ -141,9 +154,10 @@
 
     // Динамически добавляем script-тег для загрузки данных через JSONP
     (function() {
-      // Обратите внимание: обязательно опубликуйте таблицу (File → Publish to the Web)
+      // Таблица должна быть опубликована через "Файл → Опубликовать в Интернет"
       var script = document.createElement('script');
-      script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json-in-script&callback=handleData";
+      // Используем параметр tqx=out:json, чтобы сервер вернул данные, обернутые в google.visualization.Query.setResponse
+      script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json&callback=handleData";
       document.body.appendChild(script);
     })();
   </script>
