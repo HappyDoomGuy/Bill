@@ -197,16 +197,12 @@
     function getNextPaymentDate(firstPaymentDate, totalAmount, balance, monthlyPayment) {
       const today = new Date();
       const finalDate = getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment);
-
       if (balance <= 0) return "Выплата завершена";
-
       let paymentsMade = Math.floor((totalAmount - balance) / monthlyPayment);
       let nextPaymentDate = new Date(firstPaymentDate);
       nextPaymentDate.setMonth(nextPaymentDate.getMonth() + paymentsMade);
-
       if (nextPaymentDate > finalDate) return finalDate.toLocaleDateString('ru-RU');
       if (nextPaymentDate <= today) nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
-
       return nextPaymentDate.toLocaleDateString('ru-RU');
     }
 
@@ -242,9 +238,9 @@
 
     // Функция для обновления карточки после оплаты
     function updateCardBalance(card, newBalance, totalAmount, monthlyPayment) {
-      // Обновляем текст Остатка выплаты
+      // Обновляем текст остатка выплаты (текст с двумя знаками после запятой и с символом ₽)
       card.querySelector('.info .highlight.balance').textContent = newBalance.toFixed(2) + " ₽";
-      // Пересчитываем процент
+      // Пересчитываем процент оплаты
       let percentPaid = totalAmount > 0 ? ((totalAmount - newBalance) / totalAmount) * 100 : 0;
       let progressFill = card.querySelector('.progress-fill');
       progressFill.style.width = percentPaid.toFixed(2) + "%";
@@ -255,16 +251,16 @@
       let nextPaymentAmount = getNextPaymentAmount(totalAmount, newBalance, monthlyPayment);
       card.querySelector('.payment .highlight.nextAmount').textContent = nextPaymentAmount + " ₽";
       card.querySelector('.date .highlight.nextDate').textContent = nextPaymentDate;
-      // Если долг погашен, скрываем кнопку погашения
+      // Если долг погашен, скрываем раздел погашения
       if(newBalance <= 0){
         let repaymentSection = card.querySelector('.repayment-section');
         if(repaymentSection) repaymentSection.style.display = 'none';
       }
     }
 
-    // Функция для отправки оплаты на сервер (Google Apps Script)
+    // Функция отправки оплаты на сервер (Google Apps Script)
+    // В режиме no-cors мы не можем получить ответ, поэтому полагаем, что запрос выполнен успешно
     function sendPayment(rowIndex, paymentAmount, callback) {
-      // Замените URL ниже на URL вашего веб-приложения (Google Apps Script)
       const endpoint = "https://script.google.com/macros/s/AKfycby9SBPFZNpCRoBPr5azwCqlq_4tOm0pSIV4rZI_4p6KAk6TkoAQCEjrHQgThyz7-TI/exec";
       fetch(endpoint, {
         method: "POST",
@@ -277,12 +273,14 @@
           payment: Number(paymentAmount)
         })
       })
-      .then(response => response.json())
-      .then(data => callback(null, data))
+      .then(() => {
+        // В режиме no-cors ответ opaque – считаем запрос успешным
+        callback(null, {status: "success"});
+      })
       .catch(err => callback(err));
     }
 
-    // Функция для отображения карточек
+    // Функция отображения карточек
     function populateCards(data) {
       var container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
@@ -293,18 +291,13 @@
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
         var датаПервойВыплаты = parseDate(row["Дата первой выплаты"] || "01.01.2024");
         var баланс = parseFloat(row["Остаток выплаты"]) || 0;
-
-        // Процент выплачено
         var percentPaid = общаяСумма > 0 ? ((общаяСумма - баланс) / общаяСумма) * 100 : 0;
-
-        // Дата и сумма следующей выплаты
         var nextPaymentDate = getNextPaymentDate(датаПервойВыплаты, общаяСумма, баланс, ежемесячная);
         var nextPaymentAmount = getNextPaymentAmount(общаяСумма, баланс, ежемесячная);
-
-        // Создаём карточку
+        
         var card = document.createElement('div');
         card.classList.add('card');
-        // Сохраняем данные для обновления
+        // Сохраняем необходимые данные в data-атрибутах
         card.dataset.rowIndex = row.rowIndex;
         card.dataset.firstPaymentDate = датаПервойВыплаты;
         card.dataset.totalAmount = общаяСумма;
@@ -326,8 +319,7 @@
             <span class="progress-percent">${percentPaid.toFixed(2)}%</span>
           </div>
         `;
-
-        // Если долг не погашен, добавляем кнопку "Погашение" и форму ввода
+        
         if(баланс > 0){
           var repaymentSection = document.createElement('div');
           repaymentSection.classList.add('repayment-section');
@@ -340,47 +332,47 @@
             </div>
           `;
           card.appendChild(repaymentSection);
-
-          // Обработчик показа/скрытия формы
+          
           repaymentSection.querySelector('.repayment-btn').addEventListener('click', function() {
             var form = repaymentSection.querySelector('.payment-form');
             form.style.display = form.style.display === "block" ? "none" : "block";
           });
-
-          // Обработчик нажатия кнопки "Оплатить"
+          
           repaymentSection.querySelector('.pay-btn').addEventListener('click', function() {
             var rublesInput = repaymentSection.querySelector('.payment-input-rubles');
             var kopeksInput = repaymentSection.querySelector('.payment-input-kopeks');
-            
             var rubles = parseInt(rublesInput.value);
-            // Если поле копеек пустое, принимаем 0
             var kopeksValue = kopeksInput.value.trim();
             var kopeks = kopeksValue === "" ? 0 : parseInt(kopeksValue);
             
-            // Проверка корректности введённых данных
             if (isNaN(rubles) || rubles < 0 || isNaN(kopeks) || kopeks < 0 || kopeks > 99) {
               alert("Введите корректную сумму оплаты");
               return;
             }
             
-            // Формирование итоговой суммы в формате рубли.копейки
             var paymentValue = parseFloat(rubles + "." + (kopeks < 10 ? "0" : "") + kopeks);
             if (paymentValue <= 0) {
               alert("Введите корректную сумму оплаты");
               return;
             }
             
-            var rowIndex = card.dataset.rowIndex;
-            sendPayment(rowIndex, paymentValue, function(err, result){
+            // Считаем текущий баланс, удаляя лишние символы
+            var balanceElem = card.querySelector('.highlight.balance');
+            var currentBalanceText = balanceElem.textContent.replace(" ₽", "").replace(",", ".");
+            var currentBalance = parseFloat(currentBalanceText);
+            var newBalance = currentBalance - paymentValue;
+            if (newBalance < 0) newBalance = 0;
+            
+            // Обновляем UI сразу на клиенте
+            updateCardBalance(card, newBalance, общаяСумма, ежемесячная);
+            
+            // Отправляем на сервер только сумму платежа
+            sendPayment(card.dataset.rowIndex, paymentValue, function(err, result){
               if(err || result.status !== "success"){
                 alert("Ошибка при оплате: " + (err ? err : result.message));
                 return;
               }
-              // Обновляем баланс карточки
-              var newBalance = result.newBalance;
-              updateCardBalance(card, newBalance, общаяСумма, ежемесячная);
               alert("Оплата прошла успешно!");
-              // Скрываем форму и очищаем поля ввода
               repaymentSection.querySelector('.payment-form').style.display = "none";
               rublesInput.value = "";
               kopeksInput.value = "";
@@ -393,7 +385,6 @@
 
     (function() {
       var script = document.createElement('script');
-      // Замените идентификатор на ваш
       script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json&callback=handleData";
       document.body.appendChild(script);
     })();
