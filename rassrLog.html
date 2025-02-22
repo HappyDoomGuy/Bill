@@ -138,96 +138,74 @@
       populateCards(data);
     }
 
-    // ✅ Функция для вычисления даты следующей выплаты
-    function getNextPaymentDate(firstPaymentDateStr) {
-      console.log("Входная строка даты:", firstPaymentDateStr);
-  
-      const today = new Date();
-  
-      // Очищаем строку от лишних пробелов
-      firstPaymentDateStr = firstPaymentDateStr.trim();
-      console.log("Очищенная строка даты:", firstPaymentDateStr);
-  
-      // Проверяем, пустая ли строка
-      if (!firstPaymentDateStr) {
-          console.error("Ошибка: Пустая строка даты.");
-          return "Ошибка даты";
-      }
-  
-      let paymentDate;
-  
-      // ✅ Если формат "Date(2024,9,20)"
-      if (firstPaymentDateStr.startsWith("Date(")) {
-          try {
-              const dateValues = firstPaymentDateStr.match(/\d+/g).map(Number); // Извлекаем числа из строки
-              console.log("Распарсенные значения Date():", dateValues);
-  
-              const [year, month, day] = dateValues; // JS: month от 0 до 11
-              paymentDate = new Date(year, month, day); // Создаем объект даты
-          } catch (error) {
-              console.error("Ошибка при разборе формата Date():", error);
-              return "Ошибка даты";
-          }
+    // ✅ Функция для преобразования строки в дату
+    function parseDate(dateStr) {
+      if (!dateStr) return null;
+      dateStr = dateStr.trim();
+      if (dateStr.startsWith("Date(")) {
+        const dateValues = dateStr.match(/\d+/g).map(Number);
+        return new Date(dateValues[0], dateValues[1], dateValues[2]);
       } else {
-          // ✅ Формат dd.mm.yyyy
-          const [day, month, year] = firstPaymentDateStr.split('.').map(Number);
-          console.log("Распарсенные значения:", { day, month, year });
-  
-          if (!day || !month || !year) {
-              console.error("Ошибка: Неверный формат даты. Должно быть dd.mm.yyyy.");
-              return "Ошибка даты";
-          }
-  
-          paymentDate = new Date(year, month - 1, day);
+        const [day, month, year] = dateStr.split('.').map(Number);
+        return new Date(year, month - 1, day);
       }
-  
-      console.log("Созданный объект даты:", paymentDate);
-  
-      // Если дата неверна, возвращаем "Ошибка даты"
-      if (isNaN(paymentDate.getTime())) {
-          console.error("Ошибка: Invalid Date. Проверьте корректность данных.");
-          return "Ошибка даты";
-      }
-  
-      // Если первая выплата уже прошла, вычисляем следующую выплату
-      while (paymentDate <= today) {
-          console.log("Текущая дата прошла, переходим к следующему месяцу...");
-          paymentDate.setMonth(paymentDate.getMonth() + 1);
-  
-          // Если день отсутствует в месяце (например, 31 февраля), выбираем последний день месяца
-          const lastDayOfMonth = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0).getDate();
-          if (paymentDate.getDate() > lastDayOfMonth) {
-              console.log("Дата превышает последний день месяца. Устанавливаем последний день месяца:", lastDayOfMonth);
-              paymentDate.setDate(lastDayOfMonth);
-          }
-      }
-  
-      console.log("Дата следующей выплаты:", paymentDate.toLocaleDateString('ru-RU'));
-      return paymentDate.toLocaleDateString('ru-RU'); // Формат вывода: dd.mm.yyyy
-  }
+    }
 
+    // ✅ Функция для расчёта даты финальной выплаты
+    function getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment) {
+      let finalDate = new Date(firstPaymentDate);
+      let months = Math.ceil(totalAmount / monthlyPayment);
+      finalDate.setMonth(finalDate.getMonth() + months - 1);
+      return finalDate;
+    }
 
+    // ✅ Функция для расчёта даты следующей выплаты с учётом переплаты
+    function getNextPaymentDate(firstPaymentDate, totalAmount, balance, monthlyPayment) {
+      const today = new Date();
+      const finalDate = getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment);
 
+      if (balance <= 0) return "Выплата завершена";
 
+      let monthsPaidAhead = Math.floor((totalAmount - balance) / monthlyPayment);
+      let nextPaymentDate = new Date(firstPaymentDate);
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsPaidAhead);
+
+      if (nextPaymentDate > finalDate) return finalDate.toLocaleDateString('ru-RU');
+      if (nextPaymentDate <= today) nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+
+      return nextPaymentDate.toLocaleDateString('ru-RU');
+    }
+
+    // ✅ Функция для расчёта суммы следующей выплаты
+    function getNextPaymentAmount(balance, firstPaymentDate, totalAmount, monthlyPayment) {
+      const finalDate = getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment);
+      const today = new Date();
+
+      if (balance <= 0) return "0.00";
+
+      let remainingMonths = Math.ceil((finalDate - today) / (1000 * 60 * 60 * 24 * 30));
+      return (balance / remainingMonths).toFixed(2);
+    }
+
+    // ✅ Функция для отображения карточек
     function populateCards(data) {
       var container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
-      data.forEach(function(row) {
+      data.forEach(function (row) {
         var товар = row["Товар"] || "";
         var контора = row["Контора"] || "";
         var общаяСумма = parseFloat(row["Общая сумма"]) || 0;
         var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
-        var суммаБлижайшей = Math.min(ежемесячная, остаток);
-        суммаБлижайшей = isNaN(суммаБлижайшей) ? 0 : суммаБлижайшей;
+        var датаПервойВыплаты = parseDate(row["Дата первой выплаты"] || "01.01.2024");
 
         var процентВыплачено = общаяСумма > 0 ? ((общаяСумма - остаток) / общаяСумма) * 100 : 0;
 
-        // ✅ Дата следующей выплаты
-        var датаПервойВыплаты = row["Дата первой выплаты"] || "01.01.2024";
-        var датаСледующейВыплаты = getNextPaymentDate(датаПервойВыплаты);
+        // ✅ Дата и сумма следующей выплаты
+        var датаСледующейВыплаты = getNextPaymentDate(датаПервойВыплаты, общаяСумма, остаток, ежемесячная);
+        var суммаБлижайшей = getNextPaymentAmount(остаток, датаПервойВыплаты, общаяСумма, ежемесячная);
 
-        // ✅ Плавный переход от красного через жёлтый к зелёному и металлик на 100%
+        // ✅ Цвет прогресса
         function getDynamicColor(percent) {
           if (percent >= 100) return 'linear-gradient(90deg, #b0b0b0, #d6d6d6, #b0b0b0)';
           let r, g, b;
@@ -250,7 +228,7 @@
           <h2>${товар}</h2>
           <h3>${контора}</h3>
           <div class="info"><span>Сумма: <span class="highlight">${общаяСумма.toFixed(2)} ₽</span></span><span>Остаток: <span class="highlight">${остаток.toFixed(2)} ₽</span></span></div>
-          <div class="payment">Ближайшая выплата: <span class="highlight">${суммаБлижайшей.toFixed(2)} ₽</span></div>
+          <div class="payment">Сумма следующей выплаты: <span class="highlight">${суммаБлижайшей} ₽</span></div>
           <div class="date">Дата следующей выплаты: <span class="highlight">${датаСледующейВыплаты}</span></div>
           <div class="progress-container">
             <div class="progress-bar">
