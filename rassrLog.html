@@ -55,12 +55,17 @@
     .progress-fill {
       height: 100%;
       background-color: #28a745;
-      text-align: center;
+      position: relative;
+      transition: width 0.5s ease;
+    }
+    .progress-percent {
+      position: absolute;
+      top: 0;
+      right: 5px;
       color: #fff;
       font-size: 12px;
       line-height: 15px;
       font-weight: bold;
-      transition: width 0.5s ease;
     }
 
     @media (max-width: 480px) {
@@ -172,7 +177,9 @@
         progressTd.innerHTML = `
           <div class="progress-container">
             <div class="progress-bar">
-              <div class="progress-fill" style="width: ${процентВыплачено.toFixed(2)}%;">${процентВыплачено.toFixed(2)}%</div>
+              <div class="progress-fill" style="width: ${процентВыплачено.toFixed(2)}%;">
+                <span class="progress-percent">${процентВыплачено.toFixed(2)}%</span>
+              </div>
             </div>
           </div>`;
         progressTr.appendChild(progressTd);
