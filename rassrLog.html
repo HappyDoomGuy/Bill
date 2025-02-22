@@ -341,9 +341,9 @@
             <span>Сумма: <span class="highlight">${общаяСумма.toFixed(2)} ₽</span></span>
             <span>Остаток: <span class="highlight balance">${баланс.toFixed(2)} ₽</span></span>
           </div>
+          <div class="remaining">Осталось платежей: <span class="highlight remainingCount">${remainingPayments}</span></div>
           <div class="payment">Сумма следующей выплаты: <span class="highlight nextAmount">${nextPaymentAmount} ₽</span></div>
           <div class="date">Дата следующей выплаты: <span class="highlight nextDate">${nextPaymentDate}</span></div>
-          <div class="remaining">Осталось платежей: <span class="highlight remainingCount">${remainingPayments}</span></div>
           <div class="progress-container">
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${percentPaid.toFixed(2)}%; background: ${getDynamicColor(percentPaid)};"></div>
