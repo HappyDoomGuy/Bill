@@ -176,15 +176,26 @@
       return nextPaymentDate.toLocaleDateString('ru-RU');
     }
 
-    // ✅ Функция для расчёта суммы следующей выплаты
-    function getNextPaymentAmount(balance, firstPaymentDate, totalAmount, monthlyPayment) {
-      const finalDate = getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment);
-      const today = new Date();
+    // ✅ Функция для расчёта суммы следующей выплаты (фиксированная сумма, кроме последнего месяца)
+    function getNextPaymentAmount(balance, monthlyPayment) {
+      return balance > monthlyPayment ? monthlyPayment.toFixed(2) : balance.toFixed(2);
+    }
 
-      if (balance <= 0) return "0.00";
-
-      let remainingMonths = Math.ceil((finalDate - today) / (1000 * 60 * 60 * 24 * 30));
-      return (balance / remainingMonths).toFixed(2);
+    // ✅ Цвет прогресса
+    function getDynamicColor(percent) {
+      if (percent >= 100) return 'linear-gradient(90deg, #b0b0b0, #d6d6d6, #b0b0b0)';
+      let r, g, b;
+      if (percent <= 50) {
+        r = Math.round(220 + (percent / 50) * (255 - 220));
+        g = Math.round(53 + (percent / 50) * (193 - 53));
+        b = Math.round(69 - (percent / 50) * (69 - 7));
+      } else {
+        percent = percent - 50;
+        r = Math.round(255 - (percent / 50) * (255 - 40));
+        g = Math.round(193 + (percent / 50) * (167 - 193));
+        b = Math.round(7 + (percent / 50) * (69 - 7));
+      }
+      return `rgb(${r}, ${g}, ${b})`;
     }
 
     // ✅ Функция для отображения карточек
@@ -203,24 +214,7 @@
 
         // ✅ Дата и сумма следующей выплаты
         var датаСледующейВыплаты = getNextPaymentDate(датаПервойВыплаты, общаяСумма, остаток, ежемесячная);
-        var суммаБлижайшей = getNextPaymentAmount(остаток, датаПервойВыплаты, общаяСумма, ежемесячная);
-
-        // ✅ Цвет прогресса
-        function getDynamicColor(percent) {
-          if (percent >= 100) return 'linear-gradient(90deg, #b0b0b0, #d6d6d6, #b0b0b0)';
-          let r, g, b;
-          if (percent <= 50) {
-            r = Math.round(220 + (percent / 50) * (255 - 220));
-            g = Math.round(53 + (percent / 50) * (193 - 53));
-            b = Math.round(69 - (percent / 50) * (69 - 7));
-          } else {
-            percent = percent - 50;
-            r = Math.round(255 - (percent / 50) * (255 - 40));
-            g = Math.round(193 + (percent / 50) * (167 - 193));
-            b = Math.round(7 + (percent / 50) * (69 - 7));
-          }
-          return `rgb(${r}, ${g}, ${b})`;
-        }
+        var суммаБлижайшей = getNextPaymentAmount(остаток, ежемесячная);
 
         var card = document.createElement('div');
         card.classList.add('card');
