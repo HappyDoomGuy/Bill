@@ -141,22 +141,30 @@
     // ✅ Функция для вычисления даты следующей выплаты
     function getNextPaymentDate(firstPaymentDateStr) {
       const today = new Date();
-      const [day, month, year] = firstPaymentDateStr.split('.').map(Number); // Формат dd.mm.yyyy
-      let paymentDate = new Date(year, month - 1, day);
-
+  
+      // Преобразуем формат dd.mm.yyyy в yyyy-mm-dd для корректной работы new Date()
+      const [day, month, year] = firstPaymentDateStr.split('.');
+      const formattedDate = `${year}-${month}-${day}`;
+  
+      let paymentDate = new Date(formattedDate);
+  
+      // Если дата неверна, возвращаем "Ошибка даты"
+      if (isNaN(paymentDate.getTime())) return "Ошибка даты";
+  
       // Если первая выплата уже прошла, вычисляем следующую выплату
       while (paymentDate <= today) {
-        paymentDate.setMonth(paymentDate.getMonth() + 1);
-
-        // Если день отсутствует в месяце (например, 31 февраля), выбираем последний день месяца
-        const lastDayOfMonth = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0).getDate();
-        if (paymentDate.getDate() > lastDayOfMonth) {
-          paymentDate.setDate(lastDayOfMonth);
-        }
+          paymentDate.setMonth(paymentDate.getMonth() + 1);
+  
+          // Если день отсутствует в месяце (например, 31 февраля), выбираем последний день месяца
+          const lastDayOfMonth = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0).getDate();
+          if (paymentDate.getDate() > lastDayOfMonth) {
+              paymentDate.setDate(lastDayOfMonth);
+          }
       }
-
+  
       return paymentDate.toLocaleDateString('ru-RU'); // Формат вывода: dd.mm.yyyy
-    }
+  }
+
 
     function populateCards(data) {
       var container = document.getElementById('installmentsContainer');
