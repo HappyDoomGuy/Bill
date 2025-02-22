@@ -159,16 +159,16 @@
       return finalDate;
     }
 
-    // ✅ Функция для расчёта даты следующей выплаты с учётом переплаты
+    // ✅ Функция для расчёта даты следующей выплаты
     function getNextPaymentDate(firstPaymentDate, totalAmount, balance, monthlyPayment) {
       const today = new Date();
       const finalDate = getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment);
 
       if (balance <= 0) return "Выплата завершена";
 
-      let monthsPaidAhead = Math.floor((totalAmount - balance) / monthlyPayment);
+      let monthsPassed = Math.floor((totalAmount - balance) / monthlyPayment);
       let nextPaymentDate = new Date(firstPaymentDate);
-      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsPaidAhead);
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsPassed);
 
       if (nextPaymentDate > finalDate) return finalDate.toLocaleDateString('ru-RU');
       if (nextPaymentDate <= today) nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
@@ -176,9 +176,11 @@
       return nextPaymentDate.toLocaleDateString('ru-RU');
     }
 
-    // ✅ Функция для расчёта суммы следующей выплаты (фиксированная сумма, кроме последнего месяца)
-    function getNextPaymentAmount(balance, monthlyPayment) {
-      return balance > monthlyPayment ? monthlyPayment.toFixed(2) : balance.toFixed(2);
+    // ✅ Функция для расчёта суммы следующей выплаты с учётом переплаты
+    function getNextPaymentAmount(balance, monthlyPayment, overpayment) {
+      if (balance <= 0) return "0.00";
+      let nextPayment = monthlyPayment - overpayment;
+      return Math.max(nextPayment, 0).toFixed(2); // Сумма не может быть меньше 0
     }
 
     // ✅ Цвет прогресса
@@ -208,13 +210,14 @@
         var общаяСумма = parseFloat(row["Общая сумма"]) || 0;
         var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
+        var переплата = parseFloat(row["Переплата"]) || 0; // Новое поле для переплаты
         var датаПервойВыплаты = parseDate(row["Дата первой выплаты"] || "01.01.2024");
 
         var процентВыплачено = общаяСумма > 0 ? ((общаяСумма - остаток) / общаяСумма) * 100 : 0;
 
         // ✅ Дата и сумма следующей выплаты
         var датаСледующейВыплаты = getNextPaymentDate(датаПервойВыплаты, общаяСумма, остаток, ежемесячная);
-        var суммаБлижайшей = getNextPaymentAmount(остаток, ежемесячная);
+        var суммаБлижайшей = getNextPaymentAmount(остаток, ежемесячная, переплата);
 
         var card = document.createElement('div');
         card.classList.add('card');
