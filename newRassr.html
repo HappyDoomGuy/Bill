@@ -2,38 +2,67 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <!-- Настройка адаптивности для мобильных устройств -->
+  <!-- Адаптивность для мобильных устройств -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Новая рассрочка</title>
   <!-- Подключение шрифта Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* Глобальное правило для корректного расчёта размеров */
+    /* Определение CSS-переменных */
+    :root {
+      --bg-color: #181818;
+      --form-bg: #242424;
+      --text-color: #e0e0e0;
+      --accent-color: #00bcd4;
+      --accent-hover: #008c9e;
+      --border-color: #333;
+      --shadow-color: rgba(0, 0, 0, 0.6);
+      --input-bg: #333;
+      --input-border: #555;
+      --error-color: #dc3545;
+    }
+
+    /* Глобальные стили */
     *, *::before, *::after {
       box-sizing: border-box;
     }
     body {
       margin: 0;
-      padding: 0;
+      padding: 20px;
       font-family: 'Roboto', sans-serif;
-      background-color: #f5f7fa;
-      color: #333;
+      background-color: var(--bg-color);
+      color: var(--text-color);
     }
+    header, main {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    header h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+    /* Контейнер формы */
     .form-container {
       width: 95%;
       max-width: 500px;
       margin: 20px auto;
       padding: 20px;
-      background-color: #fff;
-      border: 1px solid #ddd;
+      background-color: var(--form-bg);
+      border: 1px solid var(--border-color);
       border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 10px var(--shadow-color);
+      animation: fadeIn 0.5s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .form-container h2 {
       text-align: center;
       margin-bottom: 20px;
       font-size: 24px;
-      color: #333;
+      color: var(--text-color);
     }
     .form-group {
       margin-bottom: 15px;
@@ -43,18 +72,26 @@
       margin-bottom: 5px;
       font-weight: 500;
       font-size: 14px;
+      color: var(--text-color);
     }
     .form-group input {
       width: 100%;
       padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
       font-size: 16px;
+      border: 1px solid var(--input-border);
+      border-radius: 5px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus {
+      border-color: var(--accent-color);
+      outline: none;
     }
     .readonly {
-      background-color: #e9ecef;
+      background-color: #444;
     }
-    /* Группа кнопок располагается в строку */
+    /* Группа кнопок */
     .button-group {
       display: flex;
       justify-content: space-between;
@@ -68,7 +105,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s, transform 0.2s;
       margin-top: 10px;
     }
     #submitBtn {
@@ -78,6 +115,7 @@
     }
     #submitBtn:hover {
       background-color: #218838;
+      transform: scale(1.03);
     }
     #backBtn {
       background-color: #dc3545;
@@ -85,6 +123,7 @@
     }
     #backBtn:hover {
       background-color: #c82333;
+      transform: scale(1.03);
     }
     @media (max-width: 480px) {
       .button-group {
@@ -98,48 +137,53 @@
   </style>
 </head>
 <body>
-  <div class="form-container">
-    <h2>Новая рассрочка</h2>
-    <form id="installmentForm">
-      <div class="form-group">
-        <label for="product">Товар</label>
-        <input type="text" id="product" name="product" required>
-      </div>
-      <div class="form-group">
-        <label for="company">Контора</label>
-        <input type="text" id="company" name="company" required>
-      </div>
-      <div class="form-group">
-        <label for="total">Общая сумма</label>
-        <input type="number" step="0.01" id="total" name="total" required>
-      </div>
-      <div class="form-group">
-        <label for="monthly">Ежемесячная выплата</label>
-        <input type="number" step="0.01" id="monthly" name="monthly" required>
-      </div>
-      <div class="form-group">
-        <label for="installments">Количество выплат</label>
-        <input type="number" id="installments" name="installments" required>
-      </div>
-      <div class="form-group">
-        <label for="firstDate">Дата первой выплаты (дд.мм.гггг)</label>
-        <input type="text" id="firstDate" name="firstDate" placeholder="например, 15.03.2025" required>
-      </div>
-      <div class="form-group">
-        <label>Дата закрытия рассрочки</label>
-        <input type="text" id="endDate" class="readonly" readonly>
-      </div>
-      <!-- Группа кнопок: Сохранить и Назад -->
-      <div class="form-group button-group">
-        <button type="submit" id="submitBtn">Сохранить</button>
-        <button type="button" id="backBtn">Назад</button>
-      </div>
-    </form>
-  </div>
+  <header>
+    <h1>Новая рассрочка</h1>
+  </header>
+  <main>
+    <section class="form-container">
+      <h2>Новая рассрочка</h2>
+      <form id="installmentForm">
+        <div class="form-group">
+          <label for="product">Товар</label>
+          <input type="text" id="product" name="product" required>
+        </div>
+        <div class="form-group">
+          <label for="company">Контора</label>
+          <input type="text" id="company" name="company" required>
+        </div>
+        <div class="form-group">
+          <label for="total">Общая сумма</label>
+          <input type="number" step="0.01" id="total" name="total" required>
+        </div>
+        <div class="form-group">
+          <label for="monthly">Ежемесячная выплата</label>
+          <input type="number" step="0.01" id="monthly" name="monthly" required>
+        </div>
+        <div class="form-group">
+          <label for="installments">Количество выплат</label>
+          <input type="number" id="installments" name="installments" required>
+        </div>
+        <div class="form-group">
+          <label for="firstDate">Дата первой выплаты (дд.мм.гггг)</label>
+          <input type="text" id="firstDate" name="firstDate" placeholder="например, 15.03.2025" required>
+        </div>
+        <div class="form-group">
+          <label for="endDate">Дата закрытия рассрочки</label>
+          <input type="text" id="endDate" class="readonly" readonly>
+        </div>
+        <div class="form-group button-group">
+          <button type="submit" id="submitBtn">Сохранить</button>
+          <button type="button" id="backBtn">Назад</button>
+        </div>
+      </form>
+    </section>
+  </main>
   
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec";
 
+    // Парсинг даты из строки формата "дд.мм.гггг"
     function parseDate(str) {
       const parts = str.split('.');
       if (parts.length !== 3) return null;
@@ -149,6 +193,7 @@
       return new Date(year, month, day);
     }
 
+    // Форматирование даты в строку "дд.мм.гггг"
     function formatDate(date) {
       const day = ("0" + date.getDate()).slice(-2);
       const month = ("0" + (date.getMonth() + 1)).slice(-2);
@@ -156,15 +201,18 @@
       return `${day}.${month}.${year}`;
     }
 
+    // Функция прибавления месяцев к дате с корректировкой дня
     function addMonths(date, months) {
       const d = new Date(date);
       d.setMonth(d.getMonth() + months);
+      // Если произошла корректировка (например, из 31-го числа)
       if (d.getDate() !== date.getDate()) {
         d.setDate(0);
       }
       return d;
     }
 
+    // Обновление вычисляемого поля "Дата закрытия рассрочки"
     function updateCalculatedFields() {
       const total = parseFloat(document.getElementById('total').value);
       const installments = parseInt(document.getElementById('installments').value, 10);
@@ -180,11 +228,12 @@
       document.getElementById('endDate').value = formatDate(endDate);
     }
 
-    const inputsToWatch = ['total', 'installments', 'firstDate'];
-    inputsToWatch.forEach(id => {
+    // Навешиваем обработчики для пересчёта при изменении значений
+    ['total', 'installments', 'firstDate'].forEach(id => {
       document.getElementById(id).addEventListener('input', updateCalculatedFields);
     });
 
+    // Обработка отправки формы
     document.getElementById('installmentForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -216,9 +265,7 @@
       fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
       .then(() => {
