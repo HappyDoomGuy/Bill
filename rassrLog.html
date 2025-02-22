@@ -154,19 +154,32 @@
           return "Ошибка даты";
       }
   
-      // Преобразуем формат dd.mm.yyyy в yyyy-mm-dd для корректной работы new Date()
-      const [day, month, year] = firstPaymentDateStr.split('.').map(Number);
+      let paymentDate;
   
-      console.log("Распарсенные значения:", { day, month, year });
+      // ✅ Если формат "Date(2024,9,20)"
+      if (firstPaymentDateStr.startsWith("Date(")) {
+          try {
+              const dateValues = firstPaymentDateStr.match(/\d+/g).map(Number); // Извлекаем числа из строки
+              console.log("Распарсенные значения Date():", dateValues);
   
-      // Проверяем корректность разбивки
-      if (!day || !month || !year) {
-          console.error("Ошибка: Неверный формат даты. Должно быть dd.mm.yyyy.");
-          return "Ошибка даты";
+              const [year, month, day] = dateValues; // JS: month от 0 до 11
+              paymentDate = new Date(year, month, day); // Создаем объект даты
+          } catch (error) {
+              console.error("Ошибка при разборе формата Date():", error);
+              return "Ошибка даты";
+          }
+      } else {
+          // ✅ Формат dd.mm.yyyy
+          const [day, month, year] = firstPaymentDateStr.split('.').map(Number);
+          console.log("Распарсенные значения:", { day, month, year });
+  
+          if (!day || !month || !year) {
+              console.error("Ошибка: Неверный формат даты. Должно быть dd.mm.yyyy.");
+              return "Ошибка даты";
+          }
+  
+          paymentDate = new Date(year, month - 1, day);
       }
-  
-      // Создаем дату в формате yyyy, month - 1 (так как JS считает месяцы с 0), day
-      let paymentDate = new Date(year, month - 1, day);
   
       console.log("Созданный объект даты:", paymentDate);
   
@@ -192,6 +205,7 @@
       console.log("Дата следующей выплаты:", paymentDate.toLocaleDateString('ru-RU'));
       return paymentDate.toLocaleDateString('ru-RU'); // Формат вывода: dd.mm.yyyy
   }
+
 
 
 
