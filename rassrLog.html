@@ -125,23 +125,24 @@
       text-align: right;
       white-space: nowrap;
     }
-    /* Стили для форм и кнопок */
+    /* Стили для форм и кнопок внутри карточек */
     .repayment-section {
       margin-top: 12px;
     }
     .repayment-btn, .pay-btn {
       display: inline-block;
       padding: 8px 16px;
-      background-color: var(--primary-color);
-      color: #fff;
-      border: none;
+      background-color: #fff;
+      color: #000;
+      border: 2px solid #000;
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
-      transition: none;
+      transition: background-color 0.3s, transform 0.2s;
     }
     .repayment-btn:hover, .pay-btn:hover {
-      background-color: var(--primary-hover);
+      background-color: #f0f0f0;
+      transform: scale(1.03);
     }
     .payment-form {
       margin-top: 12px;
@@ -156,7 +157,7 @@
       background: #333;
       color: var(--text-color);
       width: 80px;
-      transition: none;
+      transition: border-color 0.3s;
     }
     .payment-form input:focus {
       border-color: var(--primary-color);
@@ -182,15 +183,16 @@
       padding: 10px 20px;
       margin: 5px;
       font-size: 16px;
-      border: none;
+      border: 2px solid #000;
       border-radius: 5px;
       cursor: pointer;
-      background-color: var(--primary-color);
-      color: #fff;
-      transition: background-color 0.3s;
+      background-color: #fff;
+      color: #000;
+      transition: background-color 0.3s, transform 0.2s;
     }
     #bottomButtons button:hover {
-      background-color: var(--primary-hover);
+      background-color: #f0f0f0;
+      transform: scale(1.03);
     }
   </style>
 </head>
@@ -474,12 +476,10 @@
     // Обработчик для нижней кнопки фильтрации
     document.getElementById('filterBtn').addEventListener('click', function() {
       if (!viewCompleted) {
-        // Показываем только завершенные
         filterCompleted();
         this.textContent = "Активные";
         viewCompleted = true;
       } else {
-        // Показываем только активные
         filterActive();
         this.textContent = "Завершенные";
         viewCompleted = false;
