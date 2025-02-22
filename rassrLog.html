@@ -20,7 +20,7 @@
     .table-container {
       width: 95%;
       max-width: 1000px;
-      margin: 0 auto 40px auto;
+      margin: 0 auto;
       overflow-x: auto;
     }
     table {
@@ -42,37 +42,37 @@
     table tbody tr:nth-child(even) {
       background-color: #f9f9f9;
     }
-    .infographic {
-      width: 95%;
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #fff;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-    .progress-bar-container {
-      width: 100%;
-      background-color: #e9ecef;
-      border-radius: 5px;
-      overflow: hidden;
-      margin: 10px 0;
-    }
-    .progress-bar {
-      height: 20px;
-      background-color: #28a745;
-      width: 0;
-      transition: width 0.5s ease;
-    }
-    .infographic h2 {
-      margin-top: 0;
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
-    .summary {
-      font-size: 16px;
-      margin-bottom: 10px;
+    @media (max-width: 480px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+      tr {
+        margin-bottom: 10px;
+      }
+      td {
+        border: none;
+        position: relative;
+        padding-left: 50%;
+      }
+      td:before {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+      }
+      td:nth-of-type(1):before { content: "Товар"; }
+      td:nth-of-type(2):before { content: "Контора"; }
+      td:nth-of-type(3):before { content: "Общая сумма"; }
+      td:nth-of-type(4):before { content: "Остаток долга"; }
+      td:nth-of-type(5):before { content: "Ближайшая выплата"; }
     }
   </style>
 </head>
@@ -82,13 +82,11 @@
     <table id="installmentsTable">
       <thead>
         <tr>
-          <th>Контора</th>
           <th>Товар</th>
+          <th>Контора</th>
           <th>Общая сумма рассрочки</th>
-          <th>Общий остаток задолженности</th>
-          <th>Осталось платежей</th>
-          <th>Дата следующего платежа</th>
-          <th>Сумма следующего платежа</th>
+          <th>Остаток долга</th>
+          <th>Сумма ближайшей выплаты</th>
         </tr>
       </thead>
       <tbody>
@@ -96,141 +94,47 @@
       </tbody>
     </table>
   </div>
-  <div class="infographic">
-    <h2>Общий прогресс выплат</h2>
-    <div class="summary" id="summaryText"></div>
-    <div class="progress-bar-container">
-      <div class="progress-bar" id="overallProgress"></div>
-    </div>
-  </div>
 
+  <!-- Подключаем Tabletop.js с CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.4/tabletop.min.js"></script>
   <script>
-    // Функции для работы с датами
-    function parseDate(str) {
-      const parts = str.split('.');
-      if (parts.length !== 3) return null;
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const year = parseInt(parts[2], 10);
-      return new Date(year, month, day);
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+      Tabletop.init({
+        key: '1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk',
+        callback: showInstallments,
+        simpleSheet: true
+      });
+    });
 
-    function formatDate(date) {
-      const day = ("0" + date.getDate()).slice(-2);
-      const month = ("0" + (date.getMonth() + 1)).slice(-2);
-      const year = date.getFullYear();
-      return `${day}.${month}.${year}`;
-    }
+    function showInstallments(data) {
+      var tbody = document.querySelector('#installmentsTable tbody');
+      data.forEach(function(row) {
+        // Получаем данные из строки. Названия столбцов должны совпадать с теми, что в таблице.
+        var товар = row["Товар"] || "";
+        var контора = row["Контора"] || "";
+        var общаяСумма = parseFloat(row["Общая сумма рассрочки"]) || 0;
+        var остаток = parseFloat(row["Остаток выплаты"]) || 0;
+        var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
 
-    function addMonths(date, months) {
-      const d = new Date(date);
-      d.setMonth(d.getMonth() + months);
-      if (d.getDate() !== date.getDate()) {
-        d.setDate(0);
-      }
-      return d;
-    }
+        // Сумма ближайшей выплаты – минимальное значение между ежемесячной выплатой и остатком долга
+        var суммаБлижайшей = Math.min(ежемесячная, остаток);
+        // Если остаток равен 0, ближайшая выплата тоже 0
+        суммаБлижайшей = isNaN(суммаБлижайшей) ? 0 : суммаБлижайшей;
 
-    // Вычисляем дату следующего платежа на основе даты первой выплаты и общего числа платежей
-    function getNextPaymentDate(firstDateStr, totalPayments) {
-      const firstDate = parseDate(firstDateStr);
-      if (!firstDate) return null;
-      const now = new Date();
-      if (now < firstDate) return firstDate;
-      
-      let monthsElapsed = (now.getFullYear() - firstDate.getFullYear()) * 12 + (now.getMonth() - firstDate.getMonth());
-      if (now.getDate() >= firstDate.getDate()) {
-        monthsElapsed += 1;
-      }
-      
-      if (monthsElapsed >= totalPayments) {
-        return null; // рассрочка завершена
-      }
-      
-      return addMonths(firstDate, monthsElapsed);
-    }
+        // Форматируем числа до двух знаков после запятой
+        var общаяСуммаFormatted = общаяСумма.toFixed(2);
+        var остатокFormatted = остаток.toFixed(2);
+        var суммаБлижайшейFormatted = суммаБлижайшей.toFixed(2);
 
-    // Вычисляем количество оставшихся платежей
-    function calculateRemainingPayments(firstDateStr, totalPayments) {
-      const firstDate = parseDate(firstDateStr);
-      if (!firstDate) return totalPayments;
-      const now = new Date();
-      if (now < firstDate) return totalPayments;
-      let monthsElapsed = (now.getFullYear() - firstDate.getFullYear()) * 12 + (now.getMonth() - firstDate.getMonth());
-      if (now.getDate() >= firstDate.getDate()) {
-        monthsElapsed += 1;
-      }
-      return Math.max(totalPayments - monthsElapsed, 0);
-    }
-
-    // Функция для заполнения таблицы полученными данными
-    function populateTable(data) {
-      const tbody = document.querySelector('#installmentsTable tbody');
-      tbody.innerHTML = '';
-
-      data.forEach(item => {
-        const totalPayments = parseInt(item["Количество выплат"], 10);
-        const remainingPayments = calculateRemainingPayments(item["Дата первой выплаты"], totalPayments);
-        const nextPaymentDate = getNextPaymentDate(item["Дата первой выплаты"], totalPayments);
-        // Сумма следующего платежа равна ежемесячной выплате, если остаток больше, или остаток долга в противном случае
-        const nextPaymentAmount = nextPaymentDate ? Math.min(parseFloat(item["Ежемесячная выплата"]), parseFloat(item["Остаток долга"])) : 0;
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${item["Контора"]}</td>
-          <td>${item["Товар"]}</td>
-          <td>${parseFloat(item["Общая сумма"]).toFixed(2)}</td>
-          <td>${parseFloat(item["Остаток долга"]).toFixed(2)}</td>
-          <td>${remainingPayments}</td>
-          <td>${nextPaymentDate ? formatDate(nextPaymentDate) : '—'}</td>
-          <td>${nextPaymentDate ? nextPaymentAmount.toFixed(2) : '0.00'}</td>
-        `;
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + товар + '</td>' +
+                       '<td>' + контора + '</td>' +
+                       '<td>' + общаяСуммаFormatted + '</td>' +
+                       '<td>' + остатокFormatted + '</td>' +
+                       '<td>' + суммаБлижайшейFormatted + '</td>';
         tbody.appendChild(tr);
       });
     }
-
-    // Функция для обновления инфографики (общий прогресс выплат)
-    function updateInfographic(data) {
-      let totalInstallmentSum = 0;
-      let totalRemaining = 0;
-      data.forEach(item => {
-        totalInstallmentSum += parseFloat(item["Общая сумма"]);
-        totalRemaining += parseFloat(item["Остаток долга"]);
-      });
-      const totalPaid = totalInstallmentSum - totalRemaining;
-      const progressPercent = totalInstallmentSum ? Math.round((totalPaid / totalInstallmentSum) * 100) : 0;
-
-      document.getElementById('summaryText').textContent = 
-        `Выплачено: ${totalPaid.toFixed(2)} из ${totalInstallmentSum.toFixed(2)} (${progressPercent}%)`;
-      document.getElementById('overallProgress').style.width = progressPercent + '%';
-    }
-
-    // JSONP callback для обработки данных из Google Таблицы
-    function handleData(response) {
-      if (!response || !response.table) {
-        console.error("Ошибка: Нет данных в ответе");
-        return;
-      }
-      // Преобразуем данные таблицы в массив объектов, где ключи – это метки столбцов
-      const cols = response.table.cols.map(col => col.label);
-      const data = response.table.rows.map(row => {
-        const obj = {};
-        for (let i = 0; i < cols.length; i++) {
-          obj[cols[i]] = row.c[i] ? row.c[i].v : "";
-        }
-        return obj;
-      });
-      populateTable(data);
-      updateInfographic(data);
-    }
-
-    // Динамически добавляем script-тег для загрузки данных через JSONP
-    (function() {
-      const script = document.createElement('script');
-      // Используем параметр tqx=out:json-in-script для получения чистых данных JSONP
-      script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json-in-script&callback=handleData";
-      document.body.appendChild(script);
-    })();
   </script>
 </body>
 </html>
