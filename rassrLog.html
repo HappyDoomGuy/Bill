@@ -6,16 +6,18 @@
   <title>Мои рассрочки</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    /* Общие стили для тёмного фона и технологичного вида */
     body {
       font-family: 'Roboto', sans-serif;
-      background-color: #f5f7fa;
+      background-color: #121212;
       margin: 0;
       padding: 20px;
-      color: #333;
+      color: #e0e0e0;
     }
     h1 {
       text-align: center;
       margin-bottom: 20px;
+      color: #ffffff;
     }
     .container {
       display: grid;
@@ -24,48 +26,66 @@
       max-width: 1200px;
       margin: 0 auto;
     }
+    /* Стили карточки с эффектом отражения */
     .card {
-      background: #fff;
+      background: #1e1e1e;
       border-radius: 10px;
       padding: 16px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-      border: 1px solid #e0e0e0;
-      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      border: 1px solid #333;
       position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .card:hover {
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+    }
+    /* Отражение карточки */
+    .card::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -100%;
+      top: auto;
+      background: inherit;
+      filter: blur(8px);
+      transform: scaleY(-1);
+      opacity: 0.3;
+      z-index: -1;
     }
     .card h2 {
       font-size: 18px;
       margin: 0;
-      color: #007bff;
+      color: #00bcd4;
     }
     .card h3 {
       font-size: 16px;
       margin: 8px 0 12px;
-      color: #555;
+      color: #90a4ae;
     }
     .info {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 14px;
-      color: #555;
+      color: #90a4ae;
       margin-bottom: 8px;
     }
     .highlight {
       font-weight: 500;
-      color: #333;
+      color: #e0e0e0;
     }
     .payment {
       font-size: 14px;
-      color: #28a745;
+      color: #4caf50;
       margin-bottom: 8px;
     }
     .date {
       font-size: 13px;
-      color: #555;
+      color: #90a4ae;
       margin-bottom: 12px;
     }
     .progress-container {
@@ -76,7 +96,7 @@
     .progress-bar {
       height: 10px;
       border-radius: 5px;
-      background-color: #e9ecef;
+      background-color: #333;
       overflow: hidden;
       position: relative;
       width: 100%;
@@ -88,32 +108,39 @@
     .progress-percent {
       font-size: 12px;
       font-weight: bold;
-      color: #333;
+      color: #e0e0e0;
       white-space: nowrap;
       width: 50px;
       text-align: right;
     }
+    /* Стили кнопок с анимацией при нажатии */
     .repayment-btn, .pay-btn {
       display: inline-block;
       margin-top: 10px;
       padding: 6px 12px;
-      background-color: #007bff;
+      background-color: #00bcd4;
       color: #fff;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
     }
     .repayment-btn:hover, .pay-btn:hover {
-      background-color: #0056b3;
+      background-color: #008c9e;
+      transform: scale(1.05);
     }
-    .payment-form {
-      margin-top: 10px;
-      display: none;
+    .repayment-btn:active, .pay-btn:active {
+      transform: scale(0.95);
     }
-    .payment-form input {
-      padding: 4px;
-      margin-right: 8px;
-      font-size: 14px;
+    /* Анимация выбора карточки */
+    .card.selected {
+      animation: cardSelect 0.5s ease-out;
+      border-color: #00bcd4;
+    }
+    @keyframes cardSelect {
+      0% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+      50% { box-shadow: 0 0 20px #00bcd4; }
+      100% { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
     }
     /* Скрываем стрелки у input[type=number] */
     input[type=number]::-webkit-inner-spin-button, 
@@ -123,6 +150,11 @@
     }
     input[type=number] {
       -moz-appearance: textfield;
+      background: #333;
+      color: #e0e0e0;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 4px;
     }
     @media (max-width: 480px) {
       .container {
@@ -172,7 +204,6 @@
       populateCards(data);
     }
 
-    // Функция для преобразования строки в объект Date
     function parseDate(dateStr) {
       if (!dateStr) return null;
       dateStr = dateStr.trim();
@@ -185,7 +216,6 @@
       }
     }
 
-    // Функция расчёта даты финальной выплаты (фиксированная)
     function getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment) {
       let finalDate = new Date(firstPaymentDate);
       let months = Math.ceil(totalAmount / monthlyPayment);
@@ -193,7 +223,6 @@
       return finalDate;
     }
 
-    // Функция расчёта даты следующей выплаты
     function getNextPaymentDate(firstPaymentDate, totalAmount, balance, monthlyPayment) {
       const today = new Date();
       const finalDate = getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment);
@@ -206,7 +235,6 @@
       return nextPaymentDate.toLocaleDateString('ru-RU');
     }
 
-    // Функция расчёта суммы следующей выплаты с учётом переплаты
     function getNextPaymentAmount(totalAmount, balance, monthlyPayment) {
       if (balance <= 0) return "0.00";
       if (balance < monthlyPayment) return balance.toFixed(2);
@@ -219,7 +247,6 @@
       return Math.min(monthlyPayment, nextPayment, balance).toFixed(2);
     }
 
-    // Функция для динамического цвета прогресса
     function getDynamicColor(percent) {
       if (percent >= 100) return 'linear-gradient(90deg, #b0b0b0, #d6d6d6, #b0b0b0)';
       let r, g, b;
@@ -236,30 +263,23 @@
       return `rgb(${r}, ${g}, ${b})`;
     }
 
-    // Функция для обновления карточки после оплаты
     function updateCardBalance(card, newBalance, totalAmount, monthlyPayment) {
-      // Обновляем текст остатка выплаты (текст с двумя знаками после запятой и с символом ₽)
       card.querySelector('.info .highlight.balance').textContent = newBalance.toFixed(2) + " ₽";
-      // Пересчитываем процент оплаты
       let percentPaid = totalAmount > 0 ? ((totalAmount - newBalance) / totalAmount) * 100 : 0;
       let progressFill = card.querySelector('.progress-fill');
       progressFill.style.width = percentPaid.toFixed(2) + "%";
       progressFill.style.background = getDynamicColor(percentPaid);
-      // Обновляем сумму и дату следующей выплаты
       let firstPaymentDate = parseDate(card.dataset.firstPaymentDate);
       let nextPaymentDate = getNextPaymentDate(firstPaymentDate, totalAmount, newBalance, monthlyPayment);
       let nextPaymentAmount = getNextPaymentAmount(totalAmount, newBalance, monthlyPayment);
       card.querySelector('.payment .highlight.nextAmount').textContent = nextPaymentAmount + " ₽";
       card.querySelector('.date .highlight.nextDate').textContent = nextPaymentDate;
-      // Если долг погашен, скрываем раздел погашения
       if(newBalance <= 0){
         let repaymentSection = card.querySelector('.repayment-section');
         if(repaymentSection) repaymentSection.style.display = 'none';
       }
     }
 
-    // Функция отправки оплаты на сервер (Google Apps Script)
-    // В режиме no-cors мы не можем получить ответ, поэтому полагаем, что запрос выполнен успешно
     function sendPayment(rowIndex, paymentAmount, callback) {
       const endpoint = "https://script.google.com/macros/s/AKfycby9SBPFZNpCRoBPr5azwCqlq_4tOm0pSIV4rZI_4p6KAk6TkoAQCEjrHQgThyz7-TI/exec";
       fetch(endpoint, {
@@ -274,16 +294,17 @@
         })
       })
       .then(() => {
-        // В режиме no-cors ответ opaque – считаем запрос успешным
         callback(null, {status: "success"});
       })
       .catch(err => callback(err));
     }
 
-    // Функция отображения карточек
+    // При добавлении карточек новые будут вставляться в начало контейнера
     function populateCards(data) {
       var container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
+      // Сортировка данных так, чтобы новые карточки (с меньшим rowIndex) были первыми
+      data.sort((a, b) => a.rowIndex - b.rowIndex);
       data.forEach(function(row) {
         var товар = row["Товар"] || "";
         var контора = row["Контора"] || "";
@@ -297,7 +318,6 @@
         
         var card = document.createElement('div');
         card.classList.add('card');
-        // Сохраняем необходимые данные в data-атрибутах
         card.dataset.rowIndex = row.rowIndex;
         card.dataset.firstPaymentDate = датаПервойВыплаты;
         card.dataset.totalAmount = общаяСумма;
@@ -325,7 +345,7 @@
           repaymentSection.classList.add('repayment-section');
           repaymentSection.innerHTML = `
             <button class="repayment-btn">Погашение</button>
-            <div class="payment-form">
+            <div class="payment-form" style="display: none;">
               <input type="number" min="0" placeholder="Рубли" class="payment-input-rubles" style="width:80px;">
               <input type="number" min="0" max="99" placeholder="Копейки (необязательно)" class="payment-input-kopeks" style="width:60px;">
               <button class="pay-btn">Оплатить</button>
@@ -334,8 +354,10 @@
           card.appendChild(repaymentSection);
           
           repaymentSection.querySelector('.repayment-btn').addEventListener('click', function() {
+            card.classList.add('selected');
             var form = repaymentSection.querySelector('.payment-form');
             form.style.display = form.style.display === "block" ? "none" : "block";
+            setTimeout(() => card.classList.remove('selected'), 500);
           });
           
           repaymentSection.querySelector('.pay-btn').addEventListener('click', function() {
@@ -356,17 +378,14 @@
               return;
             }
             
-            // Считаем текущий баланс, удаляя лишние символы
             var balanceElem = card.querySelector('.highlight.balance');
             var currentBalanceText = balanceElem.textContent.replace(" ₽", "").replace(",", ".");
             var currentBalance = parseFloat(currentBalanceText);
             var newBalance = currentBalance - paymentValue;
             if (newBalance < 0) newBalance = 0;
             
-            // Обновляем UI сразу на клиенте
             updateCardBalance(card, newBalance, общаяСумма, ежемесячная);
             
-            // Отправляем на сервер только сумму платежа
             sendPayment(card.dataset.rowIndex, paymentValue, function(err, result){
               if(err || result.status !== "success"){
                 alert("Ошибка при оплате: " + (err ? err : result.message));
@@ -379,7 +398,8 @@
             });
           });
         }
-        container.appendChild(card);
+        // Добавляем новую карточку в начало контейнера
+        container.insertAdjacentElement('afterbegin', card);
       });
     }
 
