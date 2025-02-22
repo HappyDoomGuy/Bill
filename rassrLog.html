@@ -150,7 +150,7 @@
     function getNextPaymentDateCustom(firstDateStr, totalPaymentsText) {
       if (!firstDateStr || !totalPaymentsText) return null;
       var firstDate = parseDate(firstDateStr);
-      var totalPayments = parseInt(totalPaymentsText.trim(), 10);
+      var totalPayments = parseInt(("" + totalPaymentsText).trim(), 10);
       if (!firstDate || isNaN(totalPayments)) return null;
       
       var today = new Date();
@@ -169,7 +169,7 @@
       if (currentIndex < totalPayments) {
         nextDate = scheduledDates[currentIndex];
       } else {
-        // Если все запланированные даты прошли, считаем следующей датой последнюю дату + 1 месяц
+        // Если все запланированные даты прошли, следующая = последняя + 1 месяц
         nextDate = addMonths(scheduledDates[totalPayments - 1], 1);
         currentIndex = totalPayments;
       }
@@ -203,7 +203,7 @@
         var общаяСумма = parseFloat(row["Общая сумма рассрочки"]) || 0;
         var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
-        var количествоВыплат = row["Количество выплат"] ? row["Количество выплат"].trim() : "";
+        var количествоВыплат = row["Количество выплат"] ? ("" + row["Количество выплат"]).trim() : "";
         var датаПервой = row["Дата первой выплаты"] ? row["Дата первой выплаты"].trim() : "";
         
         var nextInfo = getNextPaymentDateCustom(датаПервой, количествоВыплат);
@@ -211,15 +211,15 @@
         var missedCount = nextInfo ? nextInfo.missedCount : 0;
         var nextDateText = nextDate ? formatDate(nextDate) : "—";
         
-        // Если просрочены платежи, считаем сумму ближайшей выплаты как:
-        // стандартная выплата + (ежемесячная * количество просроченных платежей), но не больше остатка.
+        // Если просрочены платежи, рассчитываем сумму ближайшей выплаты:
+        // стандартная выплата + (ежемесячная * missedCount), но не больше остатка
         var plannedNext = ежемесячная;
         if (missedCount > 0) {
           plannedNext += ежемесячная * missedCount;
         }
         var суммаБлижайшей = Math.min(plannedNext, остаток);
         
-        // Если просрочены платежи, добавляем класс для выделения даты красным.
+        // Если платежи просрочены, добавляем класс для выделения даты красным.
         var dateCellClass = missedCount > 0 ? "overdue" : "";
         
         var tr = document.createElement('tr');
