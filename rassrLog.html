@@ -140,30 +140,59 @@
 
     // ✅ Функция для вычисления даты следующей выплаты
     function getNextPaymentDate(firstPaymentDateStr) {
+      console.log("Входная строка даты:", firstPaymentDateStr);
+  
       const today = new Date();
   
-      // Преобразуем формат dd.mm.yyyy в yyyy-mm-dd для корректной работы new Date()
-      const [day, month, year] = firstPaymentDateStr.split('.');
-      const formattedDate = `${year}-${month}-${day}`;
+      // Очищаем строку от лишних пробелов
+      firstPaymentDateStr = firstPaymentDateStr.trim();
+      console.log("Очищенная строка даты:", firstPaymentDateStr);
   
-      let paymentDate = new Date(formattedDate);
+      // Проверяем, пустая ли строка
+      if (!firstPaymentDateStr) {
+          console.error("Ошибка: Пустая строка даты.");
+          return "Ошибка даты";
+      }
+  
+      // Преобразуем формат dd.mm.yyyy в yyyy-mm-dd для корректной работы new Date()
+      const [day, month, year] = firstPaymentDateStr.split('.').map(Number);
+  
+      console.log("Распарсенные значения:", { day, month, year });
+  
+      // Проверяем корректность разбивки
+      if (!day || !month || !year) {
+          console.error("Ошибка: Неверный формат даты. Должно быть dd.mm.yyyy.");
+          return "Ошибка даты";
+      }
+  
+      // Создаем дату в формате yyyy, month - 1 (так как JS считает месяцы с 0), day
+      let paymentDate = new Date(year, month - 1, day);
+  
+      console.log("Созданный объект даты:", paymentDate);
   
       // Если дата неверна, возвращаем "Ошибка даты"
-      if (isNaN(paymentDate.getTime())) return "Ошибка даты";
+      if (isNaN(paymentDate.getTime())) {
+          console.error("Ошибка: Invalid Date. Проверьте корректность данных.");
+          return "Ошибка даты";
+      }
   
       // Если первая выплата уже прошла, вычисляем следующую выплату
       while (paymentDate <= today) {
+          console.log("Текущая дата прошла, переходим к следующему месяцу...");
           paymentDate.setMonth(paymentDate.getMonth() + 1);
   
           // Если день отсутствует в месяце (например, 31 февраля), выбираем последний день месяца
           const lastDayOfMonth = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0).getDate();
           if (paymentDate.getDate() > lastDayOfMonth) {
+              console.log("Дата превышает последний день месяца. Устанавливаем последний день месяца:", lastDayOfMonth);
               paymentDate.setDate(lastDayOfMonth);
           }
       }
   
+      console.log("Дата следующей выплаты:", paymentDate.toLocaleDateString('ru-RU'));
       return paymentDate.toLocaleDateString('ru-RU'); // Формат вывода: dd.mm.yyyy
   }
+
 
 
     function populateCards(data) {
