@@ -144,12 +144,10 @@
     input[type=number] {
       -moz-appearance: textfield;
     }
+    /* На смартфонах сохраняем горизонтальный скролл */
     @media (max-width: 480px) {
-      .container {
-        flex-direction: column;
-      }
       .card {
-        width: auto;
+        width: 260px;
       }
     }
   </style>
