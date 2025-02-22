@@ -195,7 +195,6 @@
   </style>
 </head>
 <body>
-  <!-- JSONP callback для получения данных из Google Sheets -->
   <script>
     window.google = {
       visualization: {
@@ -219,7 +218,7 @@
   </main>
 
   <script>
-    let viewCompleted = false; // false - показываем все (активные и завершенные)
+    let viewCompleted = false; // false - показываем только активные (без завершенных)
 
     function handleData(response) {
       if (!response || !response.table) {
@@ -235,6 +234,8 @@
         return obj;
       });
       populateCards(data);
+      // По умолчанию скрываем завершенные карточки
+      filterActive();
     }
 
     function parseDate(dateStr) {
@@ -316,6 +317,7 @@
       const remainingPayments = getRemainingPayments(totalAmount, newBalance, monthlyPayment);
       card.querySelector('.remaining .highlight.remainingCount').textContent = remainingPayments;
       if (newBalance <= 0) {
+        card.classList.add('completed');
         const repaymentSection = card.querySelector('.repayment-section');
         if (repaymentSection) repaymentSection.style.display = 'none';
       }
@@ -343,6 +345,7 @@
     function populateCards(data) {
       const container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
+      // Сортируем данные так, чтобы карточки с меньшим rowIndex (новые) шли первыми
       data.sort((a, b) => a.rowIndex - b.rowIndex);
       data.forEach(function(row) {
         const товар = row["Товар"] || "";
@@ -358,7 +361,6 @@
         
         const card = document.createElement('article');
         card.classList.add('card');
-        // Добавляем класс "completed" если рассрочка завершена (баланс равен 0)
         if (баланс <= 0) {
           card.classList.add('completed');
         }
@@ -441,30 +443,44 @@
             });
           });
         }
-        // Новая карточка добавляется в начало списка
+        // Добавляем карточку в начало контейнера
         container.insertAdjacentElement('afterbegin', card);
       });
     }
 
-    // Обработчики для нижних кнопок
-    document.getElementById('filterBtn').addEventListener('click', function() {
+    // Фильтрация: показывать только активные карточки (без завершенных)
+    function filterActive() {
       const cards = document.querySelectorAll('.container .card');
+      cards.forEach(card => {
+        if (card.classList.contains('completed')) {
+          card.style.display = "none";
+        } else {
+          card.style.display = "";
+        }
+      });
+    }
+    // Фильтрация: показывать только завершенные карточки
+    function filterCompleted() {
+      const cards = document.querySelectorAll('.container .card');
+      cards.forEach(card => {
+        if (card.classList.contains('completed')) {
+          card.style.display = "";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+
+    // Обработчик для нижней кнопки фильтрации
+    document.getElementById('filterBtn').addEventListener('click', function() {
       if (!viewCompleted) {
-        // Показать только завершённые (у которых есть класс "completed")
-        cards.forEach(card => {
-          if (!card.classList.contains('completed')) {
-            card.style.display = "none";
-          } else {
-            card.style.display = "";
-          }
-        });
-        this.textContent = "Вернуться к активным";
+        // Показываем только завершенные
+        filterCompleted();
+        this.textContent = "Активные";
         viewCompleted = true;
       } else {
-        // Показать все карточки
-        cards.forEach(card => {
-          card.style.display = "";
-        });
+        // Показываем только активные
+        filterActive();
         this.textContent = "Завершенные";
         viewCompleted = false;
       }
