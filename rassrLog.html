@@ -95,9 +95,8 @@
     </table>
   </div>
 
-  <!-- Подключаем Tabletop.js с CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/tabletop@1.5.4/dist/tabletop.min.js"></script>
-
+  <!-- Подключаем Tabletop.js через unpkg -->
+  <script src="https://unpkg.com/tabletop@1.5.4/dist/tabletop.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       Tabletop.init({
@@ -110,19 +109,16 @@
     function showInstallments(data) {
       var tbody = document.querySelector('#installmentsTable tbody');
       data.forEach(function(row) {
-        // Получаем данные из строки. Названия столбцов должны совпадать с теми, что в таблице.
         var товар = row["Товар"] || "";
         var контора = row["Контора"] || "";
         var общаяСумма = parseFloat(row["Общая сумма рассрочки"]) || 0;
         var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
 
-        // Сумма ближайшей выплаты – минимальное значение между ежемесячной выплатой и остатком долга
+        // Ближайшая выплата – минимальное значение между ежемесячной выплатой и остатком долга
         var суммаБлижайшей = Math.min(ежемесячная, остаток);
-        // Если остаток равен 0, ближайшая выплата тоже 0
         суммаБлижайшей = isNaN(суммаБлижайшей) ? 0 : суммаБлижайшей;
 
-        // Форматируем числа до двух знаков после запятой
         var общаяСуммаFormatted = общаяСумма.toFixed(2);
         var остатокFormatted = остаток.toFixed(2);
         var суммаБлижайшейFormatted = суммаБлижайшей.toFixed(2);
