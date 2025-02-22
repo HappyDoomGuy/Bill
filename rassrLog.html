@@ -20,7 +20,7 @@
     .table-container {
       width: 95%;
       max-width: 1000px;
-      margin: 0 auto;
+      margin: 0 auto 40px auto;
       overflow-x: auto;
     }
     table {
@@ -90,48 +90,62 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Данные будут заполнены динамически -->
+        <!-- Данные заполнятся динамически -->
       </tbody>
     </table>
   </div>
 
-  <!-- Подключаем локальную версию Tabletop.js -->
-  <script src="tabletop.min.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      Tabletop.init({
-        key: '1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk',
-        callback: showInstallments,
-        simpleSheet: true
+    // Функция, которая будет вызвана сервером (JSONP)
+    function handleData(response) {
+      if (!response || !response.table) {
+        console.error("Ошибка: Нет данных в ответе");
+        return;
+      }
+      // Получаем массив меток столбцов
+      var cols = response.table.cols.map(function(col) { return col.label; });
+      // Преобразуем строки таблицы в массив объектов
+      var data = response.table.rows.map(function(row) {
+        var obj = {};
+        for (var i = 0; i < cols.length; i++) {
+          obj[cols[i]] = row.c[i] ? row.c[i].v : "";
+        }
+        return obj;
       });
-    });
+      populateTable(data);
+    }
 
-    function showInstallments(data) {
+    // Функция для заполнения таблицы нужными данными
+    function populateTable(data) {
       var tbody = document.querySelector('#installmentsTable tbody');
+      tbody.innerHTML = "";
       data.forEach(function(row) {
         var товар = row["Товар"] || "";
         var контора = row["Контора"] || "";
         var общаяСумма = parseFloat(row["Общая сумма рассрочки"]) || 0;
         var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
-
-        // Сумма ближайшей выплаты – минимальное значение между ежемесячной выплатой и остатком долга
+        // Ближайшая выплата – минимальное значение между ежемесячной выплатой и остатком
         var суммаБлижайшей = Math.min(ежемесячная, остаток);
         суммаБлижайшей = isNaN(суммаБлижайшей) ? 0 : суммаБлижайшей;
-
-        var общаяСуммаFormatted = общаяСумма.toFixed(2);
-        var остатокFormatted = остаток.toFixed(2);
-        var суммаБлижайшейFormatted = суммаБлижайшей.toFixed(2);
-
         var tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + товар + '</td>' +
-                       '<td>' + контора + '</td>' +
-                       '<td>' + общаяСуммаFormatted + '</td>' +
-                       '<td>' + остатокFormatted + '</td>' +
-                       '<td>' + суммаБлижайшейFormatted + '</td>';
+        tr.innerHTML =
+          "<td>" + товар + "</td>" +
+          "<td>" + контора + "</td>" +
+          "<td>" + общаяСумма.toFixed(2) + "</td>" +
+          "<td>" + остаток.toFixed(2) + "</td>" +
+          "<td>" + суммаБлижайшей.toFixed(2) + "</td>";
         tbody.appendChild(tr);
       });
     }
+
+    // Динамически добавляем script-тег для загрузки данных через JSONP
+    (function() {
+      // Обратите внимание: обязательно опубликуйте таблицу (File → Publish to the Web)
+      var script = document.createElement('script');
+      script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json-in-script&callback=handleData";
+      document.body.appendChild(script);
+    })();
   </script>
 </body>
 </html>
