@@ -6,10 +6,10 @@
   <title>Мои рассрочки</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* Общие стили для тёмного фона и технологичного вида */
+    /* Основные стили */
     body {
       font-family: 'Roboto', sans-serif;
-      background-color: #121212;
+      background-color: #181818;
       margin: 0;
       padding: 20px;
       color: #e0e0e0;
@@ -26,30 +26,28 @@
       max-width: 1200px;
       margin: 0 auto;
     }
-    /* Стили карточки с эффектом отражения */
+    /* Стиль карточки с эффектом отражения */
     .card {
-      background: #1e1e1e;
-      border-radius: 10px;
-      padding: 16px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      background: #242424;
+      border-radius: 12px;
+      padding: 20px;
       border: 1px solid #333;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
       position: relative;
-      overflow: hidden;
-      transform-style: preserve-3d;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
     }
     .card:hover {
-      transform: translateY(-5px) scale(1.02);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8);
     }
-    /* Отражение карточки */
     .card::after {
       content: "";
       position: absolute;
+      bottom: -100%;
       left: 0;
       right: 0;
-      bottom: -100%;
-      top: auto;
+      height: 100%;
       background: inherit;
       filter: blur(8px);
       transform: scaleY(-1);
@@ -57,36 +55,36 @@
       z-index: -1;
     }
     .card h2 {
-      font-size: 18px;
+      font-size: 20px;
       margin: 0;
       color: #00bcd4;
     }
     .card h3 {
-      font-size: 16px;
-      margin: 8px 0 12px;
+      font-size: 18px;
+      margin: 10px 0 16px;
       color: #90a4ae;
     }
     .info {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 14px;
-      color: #90a4ae;
-      margin-bottom: 8px;
+      font-size: 15px;
+      margin-bottom: 12px;
+      color: #b0b0b0;
     }
     .highlight {
       font-weight: 500;
-      color: #e0e0e0;
+      color: #ffffff;
     }
     .payment {
-      font-size: 14px;
+      font-size: 15px;
       color: #4caf50;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
     .date {
-      font-size: 13px;
-      color: #90a4ae;
-      margin-bottom: 12px;
+      font-size: 14px;
+      color: #b0b0b0;
+      margin-bottom: 16px;
     }
     .progress-container {
       display: flex;
@@ -99,62 +97,65 @@
       background-color: #333;
       overflow: hidden;
       position: relative;
-      width: 100%;
+      flex: 1;
     }
     .progress-fill {
       height: 100%;
       transition: width 0.5s ease, background-color 0.5s ease;
     }
     .progress-percent {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: bold;
       color: #e0e0e0;
-      white-space: nowrap;
       width: 50px;
       text-align: right;
+      white-space: nowrap;
     }
-    /* Стили кнопок с анимацией при нажатии */
+    /* Стили для форм и кнопок */
+    .repayment-section {
+      margin-top: 12px;
+    }
     .repayment-btn, .pay-btn {
       display: inline-block;
-      margin-top: 10px;
-      padding: 6px 12px;
+      padding: 8px 16px;
       background-color: #00bcd4;
       color: #fff;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.3s, transform 0.2s;
+      font-size: 14px;
+      transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
     }
     .repayment-btn:hover, .pay-btn:hover {
       background-color: #008c9e;
-      transform: scale(1.05);
+      transform: scale(1.03);
     }
     .repayment-btn:active, .pay-btn:active {
-      transform: scale(0.95);
+      transform: scale(0.97);
     }
-    /* Анимация выбора карточки */
-    .card.selected {
-      animation: cardSelect 0.5s ease-out;
-      border-color: #00bcd4;
+    /* Поля ввода аккуратнее */
+    .payment-form {
+      margin-top: 12px;
+      display: none;
     }
-    @keyframes cardSelect {
-      0% { box-shadow: 0 0 0 rgba(0,0,0,0); }
-      50% { box-shadow: 0 0 20px #00bcd4; }
-      100% { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
-    }
-    /* Скрываем стрелки у input[type=number] */
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type=number] {
-      -moz-appearance: textfield;
-      background: #333;
-      color: #e0e0e0;
+    .payment-form input {
+      padding: 6px;
+      margin-right: 8px;
+      font-size: 14px;
       border: 1px solid #555;
       border-radius: 4px;
-      padding: 4px;
+      background: #333;
+      color: #e0e0e0;
+      width: 80px;
+    }
+    /* Анимация свечения карточки при нажатии на кнопки */
+    .card.glow {
+      animation: glowAnimation 0.5s ease-out;
+    }
+    @keyframes glowAnimation {
+      0% { box-shadow: 0 0 0px rgba(0, 188, 212, 0); }
+      50% { box-shadow: 0 0 20px rgba(0, 188, 212, 0.8); }
+      100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6); }
     }
     @media (max-width: 480px) {
       .container {
@@ -163,8 +164,8 @@
         gap: 12px;
       }
       .card {
-        border-radius: 8px;
-        padding: 14px;
+        border-radius: 10px;
+        padding: 16px;
       }
     }
   </style>
@@ -187,7 +188,6 @@
   <div class="container" id="installmentsContainer"></div>
 
   <script>
-    // Функция для обработки ответа и вызова функции отображения карточек
     function handleData(response) {
       if (!response || !response.table) {
         console.error("Ошибка: Нет данных в ответе");
@@ -195,7 +195,7 @@
       }
       var cols = response.table.cols.map(col => col.label);
       var data = response.table.rows.map(function(row, index) {
-        var obj = { rowIndex: index + 2 }; // Предполагается, что данные начинаются со второй строки
+        var obj = { rowIndex: index + 2 }; // Данные начинаются со второй строки
         for (var i = 0; i < cols.length; i++) {
           obj[cols[i]] = row.c[i] ? row.c[i].v : "";
         }
@@ -299,11 +299,10 @@
       .catch(err => callback(err));
     }
 
-    // При добавлении карточек новые будут вставляться в начало контейнера
     function populateCards(data) {
       var container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
-      // Сортировка данных так, чтобы новые карточки (с меньшим rowIndex) были первыми
+      // Сортируем данные так, чтобы карточки с меньшим rowIndex (новые) шли первыми
       data.sort((a, b) => a.rowIndex - b.rowIndex);
       data.forEach(function(row) {
         var товар = row["Товар"] || "";
@@ -345,19 +344,20 @@
           repaymentSection.classList.add('repayment-section');
           repaymentSection.innerHTML = `
             <button class="repayment-btn">Погашение</button>
-            <div class="payment-form" style="display: none;">
-              <input type="number" min="0" placeholder="Рубли" class="payment-input-rubles" style="width:80px;">
-              <input type="number" min="0" max="99" placeholder="Копейки (необязательно)" class="payment-input-kopeks" style="width:60px;">
+            <div class="payment-form">
+              <input type="number" min="0" placeholder="Рубли" class="payment-input-rubles">
+              <input type="number" min="0" max="99" placeholder="Копейки" class="payment-input-kopeks">
               <button class="pay-btn">Оплатить</button>
             </div>
           `;
           card.appendChild(repaymentSection);
           
           repaymentSection.querySelector('.repayment-btn').addEventListener('click', function() {
-            card.classList.add('selected');
+            // Анимация свечения карточки при нажатии на кнопку
+            card.classList.add('glow');
+            setTimeout(() => card.classList.remove('glow'), 500);
             var form = repaymentSection.querySelector('.payment-form');
             form.style.display = form.style.display === "block" ? "none" : "block";
-            setTimeout(() => card.classList.remove('selected'), 500);
           });
           
           repaymentSection.querySelector('.pay-btn').addEventListener('click', function() {
@@ -398,7 +398,7 @@
             });
           });
         }
-        // Добавляем новую карточку в начало контейнера
+        // Новая карточка добавляется в начало списка
         container.insertAdjacentElement('afterbegin', card);
       });
     }
