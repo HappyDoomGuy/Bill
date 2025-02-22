@@ -72,7 +72,8 @@
       td:nth-of-type(2):before { content: "Контора"; }
       td:nth-of-type(3):before { content: "Общая сумма"; }
       td:nth-of-type(4):before { content: "Остаток долга"; }
-      td:nth-of-type(5):before { content: "Ближайшая выплата"; }
+      td:nth-of-type(5):before { content: "След. платеж"; }
+      td:nth-of-type(6):before { content: "Ближайшая выплата"; }
     }
   </style>
 </head>
@@ -99,6 +100,7 @@
           <th>Контора</th>
           <th>Общая сумма рассрочки</th>
           <th>Остаток долга</th>
+          <th>Дата следующего платежа</th>
           <th>Сумма ближайшей выплаты</th>
         </tr>
       </thead>
@@ -109,6 +111,46 @@
   </div>
 
   <script>
+    // Функция для разбора строки даты (формат дд.мм.гггг)
+    function parseDate(str) {
+      var parts = str.split('.');
+      if (parts.length !== 3) return null;
+      var day = parseInt(parts[0], 10);
+      var month = parseInt(parts[1], 10) - 1;
+      var year = parseInt(parts[2], 10);
+      return new Date(year, month, day);
+    }
+
+    // Функция для форматирования даты в дд.мм.гггг
+    function formatDate(date) {
+      var day = ("0" + date.getDate()).slice(-2);
+      var month = ("0" + (date.getMonth() + 1)).slice(-2);
+      var year = date.getFullYear();
+      return day + "." + month + "." + year;
+    }
+
+    // Функция для прибавления месяцев к дате
+    function addMonths(date, months) {
+      var d = new Date(date);
+      d.setMonth(d.getMonth() + months);
+      return d;
+    }
+
+    // Вычисляет дату следующего платежа по расписанию, исходя из даты первой выплаты и количества выплат.
+    // Если ни одна из запланированных дат не наступила (то есть все в прошлом), возвращает null.
+    function getNextPaymentDateCustom(firstDateStr, totalPayments) {
+      var firstDate = parseDate(firstDateStr);
+      if (!firstDate || isNaN(totalPayments)) return null;
+      var today = new Date();
+      for (var i = 0; i < totalPayments; i++) {
+        var scheduled = addMonths(firstDate, i);
+        if (scheduled >= today) {
+          return scheduled;
+        }
+      }
+      return null;
+    }
+
     // JSONP callback для обработки данных из Google Таблицы
     function handleData(response) {
       if (!response || !response.table) {
@@ -135,18 +177,35 @@
       data.forEach(function(row) {
         var товар = row["Товар"] || "";
         var контора = row["Контора"] || "";
-        var общаяСумма = parseFloat(row["Общая сумма"]) || 0;
+        // Используем точное название столбца из таблицы
+        var общаяСумма = parseFloat(row["Общая сумма рассрочки"]) || 0;
         var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
-        // Ближайшая выплата – минимальное значение между ежемесячной выплатой и остатком долга
-        var суммаБлижайшей = Math.min(ежемесячная, остаток);
+        var количествоВыплат = parseInt(row["Количество выплат"]) || 0;
+        var датаПервой = row["Дата первой выплаты"] || "";
+
+        // Вычисляем дату следующего платежа
+        var nextDate = getNextPaymentDateCustom(датаПервой, количествоВыплат);
+        var nextDateText = "";
+        var суммаБлижайшей = 0;
+        if (nextDate) {
+          nextDateText = formatDate(nextDate);
+          // Если дата следующего платежа наступит сегодня или в будущем, ближайшая выплата — минимум между ежемесячной выплатой и остатком
+          суммаБлижайшей = Math.min(ежемесячная, остаток);
+        } else {
+          // Если все запланированные даты в прошлом — платеж просрочен: выводим "Просрочено" и считаем сумму ближайшей выплаты равной полному остатку долга
+          nextDateText = "Просрочено";
+          суммаБлижайшей = остаток;
+        }
         суммаБлижайшей = isNaN(суммаБлижайшей) ? 0 : суммаБлижайшей;
+
         var tr = document.createElement('tr');
         tr.innerHTML =
           "<td>" + товар + "</td>" +
           "<td>" + контора + "</td>" +
           "<td>" + общаяСумма.toFixed(2) + "</td>" +
           "<td>" + остаток.toFixed(2) + "</td>" +
+          "<td>" + nextDateText + "</td>" +
           "<td>" + суммаБлижайшей.toFixed(2) + "</td>";
         tbody.appendChild(tr);
       });
