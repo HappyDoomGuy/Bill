@@ -46,6 +46,7 @@
       margin-top: 5px;
       display: flex;
       align-items: center;
+      gap: 10px;
     }
     .progress-bar {
       height: 15px;
@@ -57,27 +58,14 @@
     }
     .progress-fill {
       height: 100%;
-      background-color: #28a745;
-      position: relative;
       transition: width 0.5s ease;
     }
     .progress-percent {
-      position: absolute;
-      top: 0;
-      right: 5px;
-      color: #fff;
-      font-size: 12px;
-      line-height: 15px;
-      font-weight: bold;
-      white-space: nowrap;
-    }
-    .progress-percent-outside {
-      margin-left: 8px;
       font-size: 12px;
       font-weight: bold;
       color: #333;
+      white-space: nowrap;
     }
-
     @media (max-width: 480px) {
       table, thead, tbody, th, td, tr {
         display: block;
@@ -172,6 +160,18 @@
 
         var процентВыплачено = общаяСумма > 0 ? ((общаяСумма - остаток) / общаяСумма) * 100 : 0;
 
+        // Определяем цвет в зависимости от процента
+        var progressColor;
+        if (процентВыплачено >= 100) {
+          progressColor = 'linear-gradient(90deg, #b0b0b0, #d6d6d6, #b0b0b0)';
+        } else if (процентВыплачено >= 70) {
+          progressColor = '#28a745'; // Зелёный
+        } else if (процентВыплачено >= 30) {
+          progressColor = '#fd7e14'; // Оранжевый
+        } else {
+          progressColor = '#dc3545'; // Красный
+        }
+
         var tr = document.createElement('tr');
         tr.innerHTML =
           `<td>${товар}</td>
@@ -184,18 +184,12 @@
         var progressTr = document.createElement('tr');
         var progressTd = document.createElement('td');
         progressTd.colSpan = 5;
-
-        // Отображаем процент либо внутри, либо снаружи в зависимости от размера прогресса
-        var percentDisplay = процентВыплачено >= 10
-          ? `<span class="progress-percent">${процентВыплачено.toFixed(2)}%</span>`
-          : `<span class="progress-percent-outside">${процентВыплачено.toFixed(2)}%</span>`;
-
         progressTd.innerHTML = `
           <div class="progress-container">
             <div class="progress-bar">
-              <div class="progress-fill" style="width: ${процентВыплачено.toFixed(2)}%;"></div>
+              <div class="progress-fill" style="width: ${процентВыплачено.toFixed(2)}%; background: ${progressColor};"></div>
             </div>
-            ${percentDisplay}
+            <span class="progress-percent">${процентВыплачено.toFixed(2)}%</span>
           </div>`;
         progressTr.appendChild(progressTd);
         tbody.appendChild(progressTr);
