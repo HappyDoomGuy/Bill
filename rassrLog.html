@@ -105,8 +105,8 @@
   </div>
 
   <script>
-    // URL вашего Google Apps Script (тот же, что использовался для записи)
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec";
+    // URL опубликованной Google таблицы (проверьте, что таблица опубликована для доступа)
+    const SHEET_URL = "https://spreadsheets.google.com/feeds/list/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/od6/public/values?alt=json";
 
     // Функции для работы с датами
     function parseDate(str) {
@@ -142,7 +142,6 @@
       // Если первая выплата еще не наступила, возвращаем первую дату
       if (now < firstDate) return firstDate;
       
-      // Определяем количество месяцев, прошедших с даты первой выплаты
       let monthsElapsed = (now.getFullYear() - firstDate.getFullYear()) * 12 + (now.getMonth() - firstDate.getMonth());
       if (now.getDate() >= firstDate.getDate()) {
         monthsElapsed += 1;
@@ -209,12 +208,26 @@
       document.getElementById('overallProgress').style.width = progressPercent + '%';
     }
 
-    // Получение данных из Google таблицы через Google Apps Script
+    // Получение данных напрямую из опубликованной Google таблицы
     function fetchInstallmentsData() {
-      fetch(GOOGLE_SCRIPT_URL)
+      fetch(SHEET_URL)
         .then(response => response.json())
-        .then(data => {
-          // Предполагается, что data — массив объектов с данными рассрочек
+        .then(jsonData => {
+          // В jsonData.feed.entry содержатся записи таблицы
+          const entries = jsonData.feed.entry;
+          // Преобразуем записи в массив объектов с нужными полями
+          const data = entries.map(entry => {
+            return {
+              "Контора": entry["gsx$контора"] ? entry["gsx$контора"]["$t"] : "",
+              "Товар": entry["gsx$товар"] ? entry["gsx$товар"]["$t"] : "",
+              "Общая сумма": entry["gsx$общаясумма"] ? entry["gsx$общаясумма"]["$t"] : "0",
+              "Ежемесячная выплата": entry["gsx$ежемесячнаявыплата"] ? entry["gsx$ежемесячнаявыплата"]["$t"] : "0",
+              "Количество выплат": entry["gsx$количествовыплат"] ? entry["gsx$количествовыплат"]["$t"] : "0",
+              "Дата первой выплаты": entry["gsx$датапервойвыплаты"] ? entry["gsx$датапервойвыплаты"]["$t"] : "",
+              "Дата закрытия рассрочки": entry["gsx$датазакрытиярассрочки"] ? entry["gsx$датазакрытиярассрочки"]["$t"] : "",
+              "Остаток долга": entry["gsx$остатокдолга"] ? entry["gsx$остатокдолга"]["$t"] : "0"
+            };
+          });
           populateTable(data);
           updateInfographic(data);
         })
