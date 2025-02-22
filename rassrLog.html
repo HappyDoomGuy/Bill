@@ -31,6 +31,7 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
       border: 1px solid #e0e0e0;
       transition: all 0.3s ease;
+      position: relative;
     }
     .card:hover {
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
@@ -92,6 +93,28 @@
       width: 50px;
       text-align: right;
     }
+    .repayment-btn, .pay-btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 6px 12px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .repayment-btn:hover, .pay-btn:hover {
+      background-color: #0056b3;
+    }
+    .payment-form {
+      margin-top: 10px;
+      display: none;
+    }
+    .payment-form input {
+      padding: 4px;
+      width: 100px;
+      margin-right: 8px;
+    }
     @media (max-width: 480px) {
       .container {
         display: flex;
@@ -130,8 +153,8 @@
         return;
       }
       var cols = response.table.cols.map(col => col.label);
-      var data = response.table.rows.map(row => {
-        var obj = {};
+      var data = response.table.rows.map(function(row, index) {
+        var obj = { rowIndex: index + 2 }; // Предполагается, что данные начинаются со второй строки
         for (var i = 0; i < cols.length; i++) {
           obj[cols[i]] = row.c[i] ? row.c[i].v : "";
         }
@@ -162,8 +185,6 @@
     }
 
     // Функция расчёта даты следующей выплаты
-    // Дата следующей выплаты = дата первой выплаты + количество оплаченных месяцев (полных платежей)
-    // Если рассчитанная дата уже прошла, добавляем ещё месяц
     function getNextPaymentDate(firstPaymentDate, totalAmount, balance, monthlyPayment) {
       const today = new Date();
       const finalDate = getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment);
@@ -181,12 +202,6 @@
     }
 
     // Функция расчёта суммы следующей выплаты с учётом переплаты
-    // Расчёт:
-    // totalPaid = общая сумма - остаток
-    // paymentsMade = Math.floor(totalPaid / monthlyPayment)
-    // expectedPaid = paymentsMade * monthlyPayment
-    // overpayment = totalPaid - expectedPaid
-    // nextPayment = monthlyPayment - overpayment, но не больше monthlyPayment и не больше остатка
     function getNextPaymentAmount(totalAmount, balance, monthlyPayment) {
       if (balance <= 0) return "0.00";
       if (balance < monthlyPayment) return balance.toFixed(2);
@@ -196,7 +211,6 @@
       let overpayment = totalPaid - expectedPaid;
       let nextPayment = monthlyPayment - overpayment;
       if (nextPayment < 0) nextPayment = 0;
-      // Следующий платеж не может быть больше ежемесячного платежа и не больше остатка
       return Math.min(monthlyPayment, nextPayment, balance).toFixed(2);
     }
 
@@ -217,6 +231,48 @@
       return `rgb(${r}, ${g}, ${b})`;
     }
 
+    // Функция для обновления карточки после оплаты
+    function updateCardBalance(card, newBalance, totalAmount, monthlyPayment) {
+      // Обновляем текст Остатка выплаты
+      card.querySelector('.info .highlight.balance').textContent = newBalance.toFixed(2) + " ₽";
+      // Пересчитываем процент
+      let percentPaid = totalAmount > 0 ? ((totalAmount - newBalance) / totalAmount) * 100 : 0;
+      let progressFill = card.querySelector('.progress-fill');
+      progressFill.style.width = percentPaid.toFixed(2) + "%";
+      progressFill.style.background = getDynamicColor(percentPaid);
+      // Обновляем сумму и дату следующей выплаты
+      let firstPaymentDate = parseDate(card.dataset.firstPaymentDate);
+      let nextPaymentDate = getNextPaymentDate(firstPaymentDate, totalAmount, newBalance, monthlyPayment);
+      let nextPaymentAmount = getNextPaymentAmount(totalAmount, newBalance, monthlyPayment);
+      card.querySelector('.payment .highlight.nextAmount').textContent = nextPaymentAmount + " ₽";
+      card.querySelector('.date .highlight.nextDate').textContent = nextPaymentDate;
+      // Если долг погашен, скрываем кнопку погашения
+      if(newBalance <= 0){
+        let repaymentSection = card.querySelector('.repayment-section');
+        if(repaymentSection) repaymentSection.style.display = 'none';
+      }
+    }
+
+    // Функция для отправки оплаты на сервер (Google Apps Script)
+    function sendPayment(rowIndex, paymentAmount, callback) {
+      // Замените URL ниже на URL вашего веб-приложения (Google Apps Script)
+      const endpoint = "https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec";
+      fetch(endpoint, {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          rowIndex: rowIndex,
+          payment: Number(paymentAmount)
+        })
+      })
+      .then(response => response.json())
+      .then(data => callback(null, data))
+      .catch(err => callback(err));
+    }
+
     // Функция для отображения карточек
     function populateCards(data) {
       var container = document.getElementById('installmentsContainer');
@@ -226,35 +282,85 @@
         var контора = row["Контора"] || "";
         var общаяСумма = parseFloat(row["Общая сумма"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
-        var количествоВыплат = parseFloat(row["Количество выплат"]) || 0;
         var датаПервойВыплаты = parseDate(row["Дата первой выплаты"] || "01.01.2024");
         var баланс = parseFloat(row["Остаток выплаты"]) || 0;
 
         // Процент выплачено
         var percentPaid = общаяСумма > 0 ? ((общаяСумма - баланс) / общаяСумма) * 100 : 0;
 
-        // Дата следующей выплаты
+        // Дата и сумма следующей выплаты
         var nextPaymentDate = getNextPaymentDate(датаПервойВыплаты, общаяСумма, баланс, ежемесячная);
-        // Сумма следующей выплаты с учётом переплаты
         var nextPaymentAmount = getNextPaymentAmount(общаяСумма, баланс, ежемесячная);
 
+        // Создаём карточку
         var card = document.createElement('div');
         card.classList.add('card');
+        // Сохраняем данные для обновления
+        card.dataset.rowIndex = row.rowIndex;
+        card.dataset.firstPaymentDate = датаПервойВыплаты;
+        card.dataset.totalAmount = общаяСумма;
+        card.dataset.monthlyPayment = ежемесячная;
+        
         card.innerHTML = `
           <h2>${товар}</h2>
           <h3>${контора}</h3>
           <div class="info">
             <span>Сумма: <span class="highlight">${общаяСумма.toFixed(2)} ₽</span></span>
-            <span>Остаток: <span class="highlight">${баланс.toFixed(2)} ₽</span></span>
+            <span>Остаток: <span class="highlight balance">${баланс.toFixed(2)} ₽</span></span>
           </div>
-          <div class="payment">Сумма следующей выплаты: <span class="highlight">${nextPaymentAmount} ₽</span></div>
-          <div class="date">Дата следующей выплаты: <span class="highlight">${nextPaymentDate}</span></div>
+          <div class="payment">Сумма следующей выплаты: <span class="highlight nextAmount">${nextPaymentAmount} ₽</span></div>
+          <div class="date">Дата следующей выплаты: <span class="highlight nextDate">${nextPaymentDate}</span></div>
           <div class="progress-container">
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${percentPaid.toFixed(2)}%; background: ${getDynamicColor(percentPaid)};"></div>
             </div>
             <span class="progress-percent">${percentPaid.toFixed(2)}%</span>
-          </div>`;
+          </div>
+        `;
+
+        // Если долг не погашен, добавляем кнопку "Погашение" и форму ввода
+        if(баланс > 0){
+          var repaymentSection = document.createElement('div');
+          repaymentSection.classList.add('repayment-section');
+          repaymentSection.innerHTML = `
+            <button class="repayment-btn">Погашение</button>
+            <div class="payment-form">
+              <input type="number" step="0.01" min="0" placeholder="Сумма" class="payment-input">
+              <button class="pay-btn">Оплатить</button>
+            </div>
+          `;
+          card.appendChild(repaymentSection);
+
+          // Обработчик показа/скрытия формы
+          repaymentSection.querySelector('.repayment-btn').addEventListener('click', function() {
+            var form = repaymentSection.querySelector('.payment-form');
+            form.style.display = form.style.display === "block" ? "none" : "block";
+          });
+
+          // Обработчик нажатия кнопки "Оплатить"
+          repaymentSection.querySelector('.pay-btn').addEventListener('click', function() {
+            var input = repaymentSection.querySelector('.payment-input');
+            var paymentValue = parseFloat(input.value);
+            if(isNaN(paymentValue) || paymentValue <= 0){
+              alert("Введите корректную сумму оплаты");
+              return;
+            }
+            var rowIndex = card.dataset.rowIndex;
+            sendPayment(rowIndex, paymentValue, function(err, result){
+              if(err || result.status !== "success"){
+                alert("Ошибка при оплате: " + (err ? err : result.message));
+                return;
+              }
+              // Обновляем баланс карточки
+              var newBalance = result.newBalance;
+              updateCardBalance(card, newBalance, общаяСумма, ежемесячная);
+              alert("Оплата прошла успешно!");
+              // Скрываем форму
+              repaymentSection.querySelector('.payment-form').style.display = "none";
+              input.value = "";
+            });
+          });
+        }
         container.appendChild(card);
       });
     }
