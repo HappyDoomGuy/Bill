@@ -64,7 +64,7 @@
       margin: 10px 0 16px;
       color: #90a4ae;
     }
-    .info {
+    .info, .remaining {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -247,6 +247,14 @@
       return Math.min(monthlyPayment, nextPayment, balance).toFixed(2);
     }
 
+    // Функция расчёта оставшихся платежей
+    function getRemainingPayments(totalAmount, balance, monthlyPayment) {
+      let totalPayments = Math.ceil(totalAmount / monthlyPayment);
+      let paymentsMade = Math.floor((totalAmount - balance) / monthlyPayment);
+      let remainingPayments = totalPayments - paymentsMade;
+      return remainingPayments;
+    }
+
     function getDynamicColor(percent) {
       if (percent >= 100) return 'linear-gradient(90deg, #b0b0b0, #d6d6d6, #b0b0b0)';
       let r, g, b;
@@ -274,6 +282,9 @@
       let nextPaymentAmount = getNextPaymentAmount(totalAmount, newBalance, monthlyPayment);
       card.querySelector('.payment .highlight.nextAmount').textContent = nextPaymentAmount + " ₽";
       card.querySelector('.date .highlight.nextDate').textContent = nextPaymentDate;
+      // Обновляем оставшиеся платежи
+      let remainingPayments = getRemainingPayments(totalAmount, newBalance, monthlyPayment);
+      card.querySelector('.remaining .highlight.remainingCount').textContent = remainingPayments;
       if(newBalance <= 0){
         let repaymentSection = card.querySelector('.repayment-section');
         if(repaymentSection) repaymentSection.style.display = 'none';
@@ -314,6 +325,7 @@
         var percentPaid = общаяСумма > 0 ? ((общаяСумма - баланс) / общаяСумма) * 100 : 0;
         var nextPaymentDate = getNextPaymentDate(датаПервойВыплаты, общаяСумма, баланс, ежемесячная);
         var nextPaymentAmount = getNextPaymentAmount(общаяСумма, баланс, ежемесячная);
+        var remainingPayments = getRemainingPayments(общаяСумма, баланс, ежемесячная);
         
         var card = document.createElement('div');
         card.classList.add('card');
@@ -331,6 +343,7 @@
           </div>
           <div class="payment">Сумма следующей выплаты: <span class="highlight nextAmount">${nextPaymentAmount} ₽</span></div>
           <div class="date">Дата следующей выплаты: <span class="highlight nextDate">${nextPaymentDate}</span></div>
+          <div class="remaining">Осталось платежей: <span class="highlight remainingCount">${remainingPayments}</span></div>
           <div class="progress-container">
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${percentPaid.toFixed(2)}%; background: ${getDynamicColor(percentPaid)};"></div>
