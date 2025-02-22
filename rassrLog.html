@@ -112,7 +112,6 @@
     }
     .payment-form input {
       padding: 4px;
-      width: 100px;
       margin-right: 8px;
     }
     @media (max-width: 480px) {
@@ -325,7 +324,8 @@
           repaymentSection.innerHTML = `
             <button class="repayment-btn">Погашение</button>
             <div class="payment-form">
-              <input type="number" step="0.01" min="0" placeholder="Сумма" class="payment-input">
+              <input type="number" min="0" placeholder="Рубли" class="payment-input-rubles" style="width:80px;">
+              <input type="number" min="0" max="99" placeholder="Копейки" class="payment-input-kopeks" style="width:60px;">
               <button class="pay-btn">Оплатить</button>
             </div>
           `;
@@ -339,12 +339,25 @@
 
           // Обработчик нажатия кнопки "Оплатить"
           repaymentSection.querySelector('.pay-btn').addEventListener('click', function() {
-            var input = repaymentSection.querySelector('.payment-input');
-            var paymentValue = parseFloat(input.value);
-            if(isNaN(paymentValue) || paymentValue <= 0){
+            var rublesInput = repaymentSection.querySelector('.payment-input-rubles');
+            var kopeksInput = repaymentSection.querySelector('.payment-input-kopeks');
+            
+            var rubles = parseInt(rublesInput.value);
+            var kopeks = parseInt(kopeksInput.value);
+            
+            // Проверка корректности введённых данных
+            if (isNaN(rubles) || rubles < 0 || isNaN(kopeks) || kopeks < 0 || kopeks > 99) {
               alert("Введите корректную сумму оплаты");
               return;
             }
+            
+            // Формирование итоговой суммы в формате рубли.копейки
+            var paymentValue = parseFloat(rubles + "." + (kopeks < 10 ? "0" : "") + kopeks);
+            if (paymentValue <= 0) {
+              alert("Введите корректную сумму оплаты");
+              return;
+            }
+            
             var rowIndex = card.dataset.rowIndex;
             sendPayment(rowIndex, paymentValue, function(err, result){
               if(err || result.status !== "success"){
@@ -355,9 +368,10 @@
               var newBalance = result.newBalance;
               updateCardBalance(card, newBalance, общаяСумма, ежемесячная);
               alert("Оплата прошла успешно!");
-              // Скрываем форму
+              // Скрываем форму и очищаем поля ввода
               repaymentSection.querySelector('.payment-form').style.display = "none";
-              input.value = "";
+              rublesInput.value = "";
+              kopeksInput.value = "";
             });
           });
         }
