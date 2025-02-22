@@ -44,6 +44,8 @@
     }
     .progress-container {
       margin-top: 5px;
+      display: flex;
+      align-items: center;
     }
     .progress-bar {
       height: 15px;
@@ -51,6 +53,7 @@
       background-color: #e9ecef;
       overflow: hidden;
       position: relative;
+      width: 100%;
     }
     .progress-fill {
       height: 100%;
@@ -66,6 +69,13 @@
       font-size: 12px;
       line-height: 15px;
       font-weight: bold;
+      white-space: nowrap;
+    }
+    .progress-percent-outside {
+      margin-left: 8px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #333;
     }
 
     @media (max-width: 480px) {
@@ -174,13 +184,18 @@
         var progressTr = document.createElement('tr');
         var progressTd = document.createElement('td');
         progressTd.colSpan = 5;
+
+        // Отображаем процент либо внутри, либо снаружи в зависимости от размера прогресса
+        var percentDisplay = процентВыплачено >= 10
+          ? `<span class="progress-percent">${процентВыплачено.toFixed(2)}%</span>`
+          : `<span class="progress-percent-outside">${процентВыплачено.toFixed(2)}%</span>`;
+
         progressTd.innerHTML = `
           <div class="progress-container">
             <div class="progress-bar">
-              <div class="progress-fill" style="width: ${процентВыплачено.toFixed(2)}%;">
-                <span class="progress-percent">${процентВыплачено.toFixed(2)}%</span>
-              </div>
+              <div class="progress-fill" style="width: ${процентВыплачено.toFixed(2)}%;"></div>
             </div>
+            ${percentDisplay}
           </div>`;
         progressTr.appendChild(progressTd);
         tbody.appendChild(progressTr);
