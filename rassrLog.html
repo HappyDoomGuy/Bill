@@ -42,6 +42,27 @@
     table tbody tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    .progress-container {
+      margin-top: 5px;
+    }
+    .progress-bar {
+      height: 15px;
+      border-radius: 5px;
+      background-color: #e9ecef;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      background-color: #28a745;
+      text-align: center;
+      color: #fff;
+      font-size: 12px;
+      line-height: 15px;
+      font-weight: bold;
+      transition: width 0.5s ease;
+    }
+
     @media (max-width: 480px) {
       table, thead, tbody, th, td, tr {
         display: block;
@@ -77,7 +98,6 @@
   </style>
 </head>
 <body>
-  <!-- Фиктивное определение объекта google для JSONP -->
   <script>
     window.google = {
       visualization: {
@@ -89,7 +109,7 @@
       }
     };
   </script>
-  
+
   <h1>Мои рассрочки</h1>
   <div class="table-container">
     <table id="installmentsTable">
@@ -102,22 +122,17 @@
           <th>Сумма ближайшей выплаты</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Данные заполнятся динамически -->
-      </tbody>
+      <tbody></tbody>
     </table>
   </div>
 
   <script>
-    // JSONP callback для обработки данных из Google Таблицы
     function handleData(response) {
       if (!response || !response.table) {
         console.error("Ошибка: Нет данных в ответе");
         return;
       }
-      // Получаем массив меток столбцов
       var cols = response.table.cols.map(function(col) { return col.label; });
-      // Преобразуем строки таблицы в массив объектов
       var data = response.table.rows.map(function(row) {
         var obj = {};
         for (var i = 0; i < cols.length; i++) {
@@ -128,7 +143,6 @@
       populateTable(data);
     }
 
-    // Функция для заполнения таблицы данными
     function populateTable(data) {
       var tbody = document.querySelector('#installmentsTable tbody');
       tbody.innerHTML = "";
@@ -138,25 +152,36 @@
         var общаяСумма = parseFloat(row["Общая сумма"]) || 0;
         var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
-        // Ближайшая выплата – минимальное значение между ежемесячной выплатой и остатком долга
         var суммаБлижайшей = Math.min(ежемесячная, остаток);
         суммаБлижайшей = isNaN(суммаБлижайшей) ? 0 : суммаБлижайшей;
+
+        var процентВыплачено = общаяСумма > 0 ? ((общаяСумма - остаток) / общаяСумма) * 100 : 0;
+
         var tr = document.createElement('tr');
         tr.innerHTML =
-          "<td>" + товар + "</td>" +
-          "<td>" + контора + "</td>" +
-          "<td>" + общаяСумма.toFixed(2) + "</td>" +
-          "<td>" + остаток.toFixed(2) + "</td>" +
-          "<td>" + суммаБлижайшей.toFixed(2) + "</td>";
+          `<td>${товар}</td>
+           <td>${контора}</td>
+           <td>${общаяСумма.toFixed(2)}</td>
+           <td>${остаток.toFixed(2)}</td>
+           <td>${суммаБлижайшей.toFixed(2)}</td>`;
         tbody.appendChild(tr);
+
+        var progressTr = document.createElement('tr');
+        var progressTd = document.createElement('td');
+        progressTd.colSpan = 5;
+        progressTd.innerHTML = `
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${процентВыплачено.toFixed(2)}%;">${процентВыплачено.toFixed(2)}%</div>
+            </div>
+          </div>`;
+        progressTr.appendChild(progressTd);
+        tbody.appendChild(progressTr);
       });
     }
 
-    // Динамически добавляем script-тег для загрузки данных через JSONP
     (function() {
-      // Таблица должна быть опубликована через "Файл → Опубликовать в Интернет"
       var script = document.createElement('script');
-      // Используем параметр tqx=out:json, чтобы сервер вернул данные, обернутые в google.visualization.Query.setResponse
       script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json&callback=handleData";
       document.body.appendChild(script);
     })();
