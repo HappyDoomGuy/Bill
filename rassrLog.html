@@ -105,9 +105,6 @@
   </div>
 
   <script>
-    // URL опубликованной Google таблицы (проверьте, что таблица опубликована для доступа)
-    const SHEET_URL = "https://spreadsheets.google.com/feeds/list/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/od6/public/values?alt=json";
-
     // Функции для работы с датами
     function parseDate(str) {
       const parts = str.split('.');
@@ -139,7 +136,6 @@
       const firstDate = parseDate(firstDateStr);
       if (!firstDate) return null;
       const now = new Date();
-      // Если первая выплата еще не наступила, возвращаем первую дату
       if (now < firstDate) return firstDate;
       
       let monthsElapsed = (now.getFullYear() - firstDate.getFullYear()) * 12 + (now.getMonth() - firstDate.getMonth());
@@ -204,41 +200,37 @@
       const totalPaid = totalInstallmentSum - totalRemaining;
       const progressPercent = totalInstallmentSum ? Math.round((totalPaid / totalInstallmentSum) * 100) : 0;
 
-      document.getElementById('summaryText').textContent = `Выплачено: ${totalPaid.toFixed(2)} из ${totalInstallmentSum.toFixed(2)} (${progressPercent}%)`;
+      document.getElementById('summaryText').textContent = 
+        `Выплачено: ${totalPaid.toFixed(2)} из ${totalInstallmentSum.toFixed(2)} (${progressPercent}%)`;
       document.getElementById('overallProgress').style.width = progressPercent + '%';
     }
 
-    // Получение данных напрямую из опубликованной Google таблицы
-    function fetchInstallmentsData() {
-      fetch(SHEET_URL)
-        .then(response => response.json())
-        .then(jsonData => {
-          // В jsonData.feed.entry содержатся записи таблицы
-          const entries = jsonData.feed.entry;
-          // Преобразуем записи в массив объектов с нужными полями
-          const data = entries.map(entry => {
-            return {
-              "Контора": entry["gsx$контора"] ? entry["gsx$контора"]["$t"] : "",
-              "Товар": entry["gsx$товар"] ? entry["gsx$товар"]["$t"] : "",
-              "Общая сумма": entry["gsx$общаясумма"] ? entry["gsx$общаясумма"]["$t"] : "0",
-              "Ежемесячная выплата": entry["gsx$ежемесячнаявыплата"] ? entry["gsx$ежемесячнаявыплата"]["$t"] : "0",
-              "Количество выплат": entry["gsx$количествовыплат"] ? entry["gsx$количествовыплат"]["$t"] : "0",
-              "Дата первой выплаты": entry["gsx$датапервойвыплаты"] ? entry["gsx$датапервойвыплаты"]["$t"] : "",
-              "Дата закрытия рассрочки": entry["gsx$датазакрытиярассрочки"] ? entry["gsx$датазакрытиярассрочки"]["$t"] : "",
-              "Остаток долга": entry["gsx$остатокдолга"] ? entry["gsx$остатокдолга"]["$t"] : "0"
-            };
-          });
-          populateTable(data);
-          updateInfographic(data);
-        })
-        .catch(error => {
-          console.error('Ошибка при получении данных:', error);
-        });
+    // JSONP callback для обработки данных из Google Таблицы
+    function handleData(response) {
+      if (!response || !response.table) {
+        console.error("Ошибка: Нет данных в ответе");
+        return;
+      }
+      // Преобразуем данные таблицы в массив объектов, где ключи – это метки столбцов
+      const cols = response.table.cols.map(col => col.label);
+      const data = response.table.rows.map(row => {
+        const obj = {};
+        for (let i = 0; i < cols.length; i++) {
+          obj[cols[i]] = row.c[i] ? row.c[i].v : "";
+        }
+        return obj;
+      });
+      populateTable(data);
+      updateInfographic(data);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      fetchInstallmentsData();
-    });
+    // Динамически добавляем script-тег для загрузки данных через JSONP
+    (function() {
+      const script = document.createElement('script');
+      // Замените ID на ваш. В этом примере используется Google Visualization API.
+      script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json&callback=handleData";
+      document.body.appendChild(script);
+    })();
   </script>
 </body>
 </html>
