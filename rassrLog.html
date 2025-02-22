@@ -95,8 +95,8 @@
     </table>
   </div>
 
-  <!-- Подключаем Tabletop.js через unpkg -->
-  <script src="https://unpkg.com/tabletop@1.5.4/dist/tabletop.min.js"></script>
+  <!-- Подключаем локальную версию Tabletop.js -->
+  <script src="tabletop.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       Tabletop.init({
@@ -115,7 +115,7 @@
         var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
 
-        // Ближайшая выплата – минимальное значение между ежемесячной выплатой и остатком долга
+        // Сумма ближайшей выплаты – минимальное значение между ежемесячной выплатой и остатком долга
         var суммаБлижайшей = Math.min(ежемесячная, остаток);
         суммаБлижайшей = isNaN(суммаБлижайшей) ? 0 : суммаБлижайшей;
 
