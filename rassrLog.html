@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мои рассрочки</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .table-container {
+      width: 95%;
+      max-width: 1000px;
+      margin: 0 auto 40px auto;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    table thead {
+      background-color: #007bff;
+      color: #fff;
+    }
+    table th, table td {
+      padding: 10px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    table tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .infographic {
+      width: 95%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .progress-bar-container {
+      width: 100%;
+      background-color: #e9ecef;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-bar {
+      height: 20px;
+      background-color: #28a745;
+      width: 0;
+      transition: width 0.5s ease;
+    }
+    .infographic h2 {
+      margin-top: 0;
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .summary {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Мои рассрочки</h1>
+  <div class="table-container">
+    <table id="installmentsTable">
+      <thead>
+        <tr>
+          <th>Контора</th>
+          <th>Товар</th>
+          <th>Общая сумма рассрочки</th>
+          <th>Общий остаток задолженности</th>
+          <th>Осталось платежей</th>
+          <th>Дата следующего платежа</th>
+          <th>Сумма следующего платежа</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Данные будут заполнены динамически -->
+      </tbody>
+    </table>
+  </div>
+  <div class="infographic">
+    <h2>Общий прогресс выплат</h2>
+    <div class="summary" id="summaryText"></div>
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="overallProgress"></div>
+    </div>
+  </div>
+
+  <script>
+    // URL вашего Google Apps Script (тот же, что использовался для записи)
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeFeZipM4sJy8mTXxJL_9kE_cSM_eWdGZ_LEOAFE7I-kWjFNqxbjUYICwUmW-tS1Vk1g/exec";
+
+    // Функции для работы с датами
+    function parseDate(str) {
+      const parts = str.split('.');
+      if (parts.length !== 3) return null;
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      return new Date(year, month, day);
+    }
+
+    function formatDate(date) {
+      const day = ("0" + date.getDate()).slice(-2);
+      const month = ("0" + (date.getMonth() + 1)).slice(-2);
+      const year = date.getFullYear();
+      return `${day}.${month}.${year}`;
+    }
+
+    function addMonths(date, months) {
+      const d = new Date(date);
+      d.setMonth(d.getMonth() + months);
+      if (d.getDate() !== date.getDate()) {
+        d.setDate(0);
+      }
+      return d;
+    }
+
+    // Вычисляем дату следующего платежа на основе даты первой выплаты и общего числа платежей
+    function getNextPaymentDate(firstDateStr, totalPayments) {
+      const firstDate = parseDate(firstDateStr);
+      if (!firstDate) return null;
+      const now = new Date();
+      // Если первая выплата еще не наступила, возвращаем первую дату
+      if (now < firstDate) return firstDate;
+      
+      // Определяем количество месяцев, прошедших с даты первой выплаты
+      let monthsElapsed = (now.getFullYear() - firstDate.getFullYear()) * 12 + (now.getMonth() - firstDate.getMonth());
+      if (now.getDate() >= firstDate.getDate()) {
+        monthsElapsed += 1;
+      }
+      
+      if (monthsElapsed >= totalPayments) {
+        return null; // рассрочка завершена
+      }
+      
+      return addMonths(firstDate, monthsElapsed);
+    }
+
+    // Вычисляем количество оставшихся платежей
+    function calculateRemainingPayments(firstDateStr, totalPayments) {
+      const firstDate = parseDate(firstDateStr);
+      if (!firstDate) return totalPayments;
+      const now = new Date();
+      if (now < firstDate) return totalPayments;
+      let monthsElapsed = (now.getFullYear() - firstDate.getFullYear()) * 12 + (now.getMonth() - firstDate.getMonth());
+      if (now.getDate() >= firstDate.getDate()) {
+        monthsElapsed += 1;
+      }
+      return Math.max(totalPayments - monthsElapsed, 0);
+    }
+
+    // Функция для заполнения таблицы полученными данными
+    function populateTable(data) {
+      const tbody = document.querySelector('#installmentsTable tbody');
+      tbody.innerHTML = '';
+
+      data.forEach(item => {
+        const totalPayments = parseInt(item["Количество выплат"], 10);
+        const remainingPayments = calculateRemainingPayments(item["Дата первой выплаты"], totalPayments);
+        const nextPaymentDate = getNextPaymentDate(item["Дата первой выплаты"], totalPayments);
+        // Сумма следующего платежа равна ежемесячной выплате, если остаток больше, или остаток долга в противном случае
+        const nextPaymentAmount = nextPaymentDate ? Math.min(parseFloat(item["Ежемесячная выплата"]), parseFloat(item["Остаток долга"])) : 0;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item["Контора"]}</td>
+          <td>${item["Товар"]}</td>
+          <td>${parseFloat(item["Общая сумма"]).toFixed(2)}</td>
+          <td>${parseFloat(item["Остаток долга"]).toFixed(2)}</td>
+          <td>${remainingPayments}</td>
+          <td>${nextPaymentDate ? formatDate(nextPaymentDate) : '—'}</td>
+          <td>${nextPaymentDate ? nextPaymentAmount.toFixed(2) : '0.00'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Функция для обновления инфографики (общий прогресс выплат)
+    function updateInfographic(data) {
+      let totalInstallmentSum = 0;
+      let totalRemaining = 0;
+      data.forEach(item => {
+        totalInstallmentSum += parseFloat(item["Общая сумма"]);
+        totalRemaining += parseFloat(item["Остаток долга"]);
+      });
+      const totalPaid = totalInstallmentSum - totalRemaining;
+      const progressPercent = totalInstallmentSum ? Math.round((totalPaid / totalInstallmentSum) * 100) : 0;
+
+      document.getElementById('summaryText').textContent = `Выплачено: ${totalPaid.toFixed(2)} из ${totalInstallmentSum.toFixed(2)} (${progressPercent}%)`;
+      document.getElementById('overallProgress').style.width = progressPercent + '%';
+    }
+
+    // Получение данных из Google таблицы через Google Apps Script
+    function fetchInstallmentsData() {
+      fetch(GOOGLE_SCRIPT_URL)
+        .then(response => response.json())
+        .then(data => {
+          // Предполагается, что data — массив объектов с данными рассрочек
+          populateTable(data);
+          updateInfographic(data);
+        })
+        .catch(error => {
+          console.error('Ошибка при получении данных:', error);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchInstallmentsData();
+    });
+  </script>
+</body>
+</html>
