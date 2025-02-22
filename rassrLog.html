@@ -18,7 +18,6 @@
       --accent-text: #90a4ae;
       --info-text: #b0b0b0;
     }
-
     /* Основные стили */
     body {
       font-family: 'Roboto', sans-serif;
@@ -50,11 +49,9 @@
       box-shadow: 0 4px 12px var(--shadow-color);
       position: relative;
       overflow: hidden;
-      /* Убраны свойства анимации и перехода появления */
       transition: none;
     }
     article.card:hover {
-      /* Можно оставить легкий эффект увеличения, если нужно, или убрать его полностью */
       transform: none;
       box-shadow: 0 4px 12px var(--shadow-color);
     }
@@ -118,7 +115,6 @@
     }
     .progress-fill {
       height: 100%;
-      /* Убраны свойства transition, если не нужны плавные изменения */
       transition: none;
     }
     .progress-percent {
@@ -166,7 +162,6 @@
       border-color: var(--primary-color);
       outline: none;
     }
-    /* Убран эффект свечения (класс .glow и keyframes) */
     @media (max-width: 480px) {
       .container {
         display: flex;
@@ -178,9 +173,29 @@
         padding: 16px;
       }
     }
+    /* Стили для нижнего блока кнопок */
+    #bottomButtons {
+      text-align: center;
+      margin-top: 20px;
+    }
+    #bottomButtons button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: var(--primary-color);
+      color: #fff;
+      transition: background-color 0.3s;
+    }
+    #bottomButtons button:hover {
+      background-color: var(--primary-hover);
+    }
   </style>
 </head>
 <body>
+  <!-- JSONP callback для получения данных из Google Sheets -->
   <script>
     window.google = {
       visualization: {
@@ -196,9 +211,16 @@
   <h1>Мои рассрочки</h1>
   <main>
     <div class="container" id="installmentsContainer"></div>
+    <!-- Нижний блок кнопок -->
+    <div id="bottomButtons">
+      <button id="filterBtn">Завершенные</button>
+      <button id="addBtn" onclick="window.location.href='newRassr.html'">Добавить рассрочку</button>
+    </div>
   </main>
 
   <script>
+    let viewCompleted = false; // false - показываем все (активные и завершенные)
+
     function handleData(response) {
       if (!response || !response.table) {
         console.error("Ошибка: Нет данных в ответе");
@@ -336,6 +358,10 @@
         
         const card = document.createElement('article');
         card.classList.add('card');
+        // Добавляем класс "completed" если рассрочка завершена (баланс равен 0)
+        if (баланс <= 0) {
+          card.classList.add('completed');
+        }
         card.dataset.rowIndex = row.rowIndex;
         card.dataset.firstPaymentDate = датаПервойВыплаты;
         card.dataset.totalAmount = общаяСумма;
@@ -373,7 +399,6 @@
           card.appendChild(repaymentSection);
           
           repaymentSection.querySelector('.repayment-btn').addEventListener('click', function() {
-            // Убираем анимацию свечения – просто переключаем видимость формы
             const form = repaymentSection.querySelector('.payment-form');
             form.style.display = form.style.display === "block" ? "none" : "block";
           });
@@ -420,6 +445,30 @@
         container.insertAdjacentElement('afterbegin', card);
       });
     }
+
+    // Обработчики для нижних кнопок
+    document.getElementById('filterBtn').addEventListener('click', function() {
+      const cards = document.querySelectorAll('.container .card');
+      if (!viewCompleted) {
+        // Показать только завершённые (у которых есть класс "completed")
+        cards.forEach(card => {
+          if (!card.classList.contains('completed')) {
+            card.style.display = "none";
+          } else {
+            card.style.display = "";
+          }
+        });
+        this.textContent = "Вернуться к активным";
+        viewCompleted = true;
+      } else {
+        // Показать все карточки
+        cards.forEach(card => {
+          card.style.display = "";
+        });
+        this.textContent = "Завершенные";
+        viewCompleted = false;
+      }
+    });
 
     (function() {
       const script = document.createElement('script');
