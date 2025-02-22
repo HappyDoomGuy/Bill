@@ -2,28 +2,49 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <!-- Адаптация для мобильных устройств -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Новая рассрочка</title>
+  <!-- Подключение шрифта Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+    }
     .form-container {
-      margin: 20px auto;
-      padding: 20px;
-      width: 90%;
+      margin: 40px auto;
+      padding: 30px;
+      width: 95%;
       max-width: 500px;
-      background-color: #fefefe;
-      border: 1px solid #888;
-      border-radius: 8px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
     }
     .form-group {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
     .form-group label {
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
+      font-weight: 500;
     }
     .form-group input {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
       box-sizing: border-box;
+      font-size: 16px;
     }
     .readonly {
       background-color: #e9ecef;
@@ -31,26 +52,44 @@
     /* Группа кнопок располагается в строку */
     .button-group {
       display: flex;
-      align-items: center;
+      justify-content: space-between;
     }
-    /* Кнопка отправки */
+    #submitBtn, #backBtn {
+      flex: 1;
+      padding: 12px 0;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
     #submitBtn {
-      padding: 10px 20px;
       background-color: #28a745;
       color: #fff;
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
+      margin-right: 10px;
     }
-    /* Кнопка Назад (красного цвета) */
+    #submitBtn:hover {
+      background-color: #218838;
+    }
     #backBtn {
-      padding: 10px 20px;
-      background-color: red;
+      background-color: #dc3545;
       color: #fff;
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
-      margin-left: 10px;
+    }
+    #backBtn:hover {
+      background-color: #c82333;
+    }
+    @media (max-width: 480px) {
+      .form-container {
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .button-group {
+        flex-direction: column;
+      }
+      #submitBtn, #backBtn {
+        margin: 5px 0;
+      }
     }
   </style>
 </head>
@@ -86,12 +125,7 @@
         <label>Дата закрытия рассрочки</label>
         <input type="text" id="endDate" class="readonly" readonly>
       </div>
-     <!--  <div class="form-group">
-        <label>Остаток долга</label>
-        <input type="text" id="remainder" class="readonly" readonly>
-      </div>-->
-      
-      <!-- Группа кнопок: Отправить и Назад -->
+      <!-- Группа кнопок: Сохранить и Назад -->
       <div class="form-group button-group">
         <button type="submit" id="submitBtn">Сохранить</button>
         <button type="button" id="backBtn">Назад</button>
@@ -135,13 +169,11 @@
       
       if (isNaN(total) || isNaN(installments) || !firstDate) {
         document.getElementById('endDate').value = '';
-        document.getElementById('remainder').value = '';
         return;
       }
       
       const endDate = addMonths(firstDate, installments - 1);
       document.getElementById('endDate').value = formatDate(endDate);
-      document.getElementById('remainder').value = total.toFixed(2);
     }
 
     const inputsToWatch = ['total', 'installments', 'firstDate'];
