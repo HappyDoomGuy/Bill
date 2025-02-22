@@ -106,39 +106,10 @@
   </style>
 </head>
 <body>
-  <script>
-    window.google = {
-      visualization: {
-        Query: {
-          setResponse: function(response) {
-            handleData(response);
-          }
-        }
-      }
-    };
-  </script>
-
   <h1>Мои рассрочки</h1>
   <div class="container" id="installmentsContainer"></div>
 
   <script>
-    function handleData(response) {
-      if (!response || !response.table) {
-        console.error("Ошибка: Нет данных в ответе");
-        return;
-      }
-      var cols = response.table.cols.map(function(col) { return col.label; });
-      var data = response.table.rows.map(function(row) {
-        var obj = {};
-        for (var i = 0; i < cols.length; i++) {
-          obj[cols[i]] = row.c[i] ? row.c[i].v : "";
-        }
-        return obj;
-      });
-      populateCards(data);
-    }
-
-    // ✅ Функция для преобразования строки в дату
     function parseDate(dateStr) {
       if (!dateStr) return null;
       dateStr = dateStr.trim();
@@ -151,7 +122,6 @@
       }
     }
 
-    // ✅ Функция для расчёта даты финальной выплаты
     function getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment) {
       let finalDate = new Date(firstPaymentDate);
       let months = Math.ceil(totalAmount / monthlyPayment);
@@ -159,29 +129,22 @@
       return finalDate;
     }
 
-    // ✅ Функция для расчёта даты следующей выплаты с учётом переплаты
     function getNextPaymentDate(firstPaymentDate, totalAmount, balance, monthlyPayment) {
       const today = new Date();
       const finalDate = getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment);
-
       if (balance <= 0) return "Выплата завершена";
-
       let monthsPaidAhead = Math.floor((totalAmount - balance) / monthlyPayment);
       let nextPaymentDate = new Date(firstPaymentDate);
       nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsPaidAhead);
-
       if (nextPaymentDate > finalDate) return finalDate.toLocaleDateString('ru-RU');
       if (nextPaymentDate <= today) nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
-
       return nextPaymentDate.toLocaleDateString('ru-RU');
     }
 
-    // ✅ Функция для расчёта суммы следующей выплаты (фиксированная сумма, кроме последнего месяца)
     function getNextPaymentAmount(balance, monthlyPayment) {
       return balance > monthlyPayment ? monthlyPayment.toFixed(2) : balance.toFixed(2);
     }
 
-    // ✅ Цвет прогресса
     function getDynamicColor(percent) {
       if (percent >= 100) return 'linear-gradient(90deg, #b0b0b0, #d6d6d6, #b0b0b0)';
       let r, g, b;
@@ -198,7 +161,6 @@
       return `rgb(${r}, ${g}, ${b})`;
     }
 
-    // ✅ Функция для отображения карточек
     function populateCards(data) {
       var container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
@@ -211,8 +173,6 @@
         var датаПервойВыплаты = parseDate(row["Дата первой выплаты"] || "01.01.2024");
 
         var процентВыплачено = общаяСумма > 0 ? ((общаяСумма - остаток) / общаяСумма) * 100 : 0;
-
-        // ✅ Дата и сумма следующей выплаты
         var датаСледующейВыплаты = getNextPaymentDate(датаПервойВыплаты, общаяСумма, остаток, ежемесячная);
         var суммаБлижайшей = getNextPaymentAmount(остаток, ежемесячная);
 
@@ -239,6 +199,22 @@
       script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json&callback=handleData";
       document.body.appendChild(script);
     })();
+
+    function handleData(response) {
+      if (!response || !response.table) {
+        console.error("Ошибка: Нет данных в ответе");
+        return;
+      }
+      var cols = response.table.cols.map(col => col.label);
+      var data = response.table.rows.map(row => {
+        var obj = {};
+        for (var i = 0; i < cols.length; i++) {
+          obj[cols[i]] = row.c[i] ? row.c[i].v : "";
+        }
+        return obj;
+      });
+      populateCards(data);
+    }
   </script>
 </body>
 </html>
