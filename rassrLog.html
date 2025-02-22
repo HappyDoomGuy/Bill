@@ -6,42 +6,63 @@
   <title>Мои рассрочки</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    /* Определение CSS-переменных */
+    :root {
+      --bg-color: #181818;
+      --card-bg: #242424;
+      --text-color: #e0e0e0;
+      --primary-color: #00bcd4;
+      --primary-hover: #008c9e;
+      --border-color: #333;
+      --shadow-color: rgba(0, 0, 0, 0.6);
+      --accent-text: #90a4ae;
+      --info-text: #b0b0b0;
+    }
+
     /* Основные стили */
     body {
       font-family: 'Roboto', sans-serif;
-      background-color: #181818;
+      background-color: var(--bg-color);
       margin: 0;
       padding: 20px;
-      color: #e0e0e0;
+      color: var(--text-color);
     }
     h1 {
       text-align: center;
       margin-bottom: 20px;
       color: #ffffff;
     }
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
     .container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 16px;
-      max-width: 1200px;
-      margin: 0 auto;
+    }
+    /* Анимация появления карточки */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     /* Стиль карточки с эффектом отражения */
-    .card {
-      background: #242424;
+    article.card {
+      background: var(--card-bg);
       border-radius: 12px;
       padding: 20px;
-      border: 1px solid #333;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px var(--shadow-color);
       position: relative;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
       overflow: hidden;
+      animation: fadeIn 0.5s ease forwards;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    .card:hover {
+    article.card:hover {
       transform: translateY(-4px) scale(1.01);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 8px 16px var(--shadow-color);
     }
-    .card::after {
+    article.card::after {
       content: "";
       position: absolute;
       bottom: -100%;
@@ -54,15 +75,15 @@
       opacity: 0.3;
       z-index: -1;
     }
-    .card h2 {
+    article.card h2 {
       font-size: 20px;
       margin: 0;
-      color: #00bcd4;
+      color: var(--primary-color);
     }
-    .card h3 {
+    article.card h3 {
       font-size: 18px;
       margin: 10px 0 16px;
-      color: #90a4ae;
+      color: var(--accent-text);
     }
     .info, .remaining {
       display: flex;
@@ -70,11 +91,11 @@
       align-items: center;
       font-size: 15px;
       margin-bottom: 12px;
-      color: #b0b0b0;
+      color: var(--info-text);
     }
     .highlight {
       font-weight: 500;
-      color: #ffffff;
+      color: var(--text-color);
     }
     .payment {
       font-size: 15px;
@@ -83,7 +104,7 @@
     }
     .date {
       font-size: 14px;
-      color: #b0b0b0;
+      color: var(--info-text);
       margin-bottom: 16px;
     }
     .progress-container {
@@ -96,8 +117,8 @@
       border-radius: 5px;
       background-color: #333;
       overflow: hidden;
-      position: relative;
       flex: 1;
+      position: relative;
     }
     .progress-fill {
       height: 100%;
@@ -106,7 +127,7 @@
     .progress-percent {
       font-size: 13px;
       font-weight: bold;
-      color: #e0e0e0;
+      color: var(--text-color);
       width: 50px;
       text-align: right;
       white-space: nowrap;
@@ -118,7 +139,7 @@
     .repayment-btn, .pay-btn {
       display: inline-block;
       padding: 8px 16px;
-      background-color: #00bcd4;
+      background-color: var(--primary-color);
       color: #fff;
       border: none;
       border-radius: 6px;
@@ -127,13 +148,12 @@
       transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
     }
     .repayment-btn:hover, .pay-btn:hover {
-      background-color: #008c9e;
+      background-color: var(--primary-hover);
       transform: scale(1.03);
     }
     .repayment-btn:active, .pay-btn:active {
       transform: scale(0.97);
     }
-    /* Поля ввода аккуратнее */
     .payment-form {
       margin-top: 12px;
       display: none;
@@ -145,8 +165,13 @@
       border: 1px solid #555;
       border-radius: 4px;
       background: #333;
-      color: #e0e0e0;
+      color: var(--text-color);
       width: 80px;
+      transition: border-color 0.3s;
+    }
+    .payment-form input:focus {
+      border-color: var(--primary-color);
+      outline: none;
     }
     /* Анимация свечения карточки при нажатии на кнопки */
     .card.glow {
@@ -155,7 +180,7 @@
     @keyframes glowAnimation {
       0% { box-shadow: 0 0 0px rgba(0, 188, 212, 0); }
       50% { box-shadow: 0 0 20px rgba(0, 188, 212, 0.8); }
-      100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6); }
+      100% { box-shadow: 0 4px 12px var(--shadow-color); }
     }
     @media (max-width: 480px) {
       .container {
@@ -163,7 +188,7 @@
         flex-direction: column;
         gap: 12px;
       }
-      .card {
+      article.card {
         border-radius: 10px;
         padding: 16px;
       }
@@ -171,8 +196,8 @@
   </style>
 </head>
 <body>
+  <!-- JSONP callback для получения данных из Google Sheets -->
   <script>
-    // JSONP callback для получения данных из Google Sheets
     window.google = {
       visualization: {
         Query: {
@@ -185,7 +210,9 @@
   </script>
 
   <h1>Мои рассрочки</h1>
-  <div class="container" id="installmentsContainer"></div>
+  <main>
+    <div class="container" id="installmentsContainer"></div>
+  </main>
 
   <script>
     function handleData(response) {
@@ -193,10 +220,10 @@
         console.error("Ошибка: Нет данных в ответе");
         return;
       }
-      var cols = response.table.cols.map(col => col.label);
-      var data = response.table.rows.map(function(row, index) {
-        var obj = { rowIndex: index + 2 }; // Данные начинаются со второй строки
-        for (var i = 0; i < cols.length; i++) {
+      const cols = response.table.cols.map(col => col.label);
+      const data = response.table.rows.map((row, index) => {
+        const obj = { rowIndex: index + 2 }; // Данные начинаются со второй строки
+        for (let i = 0; i < cols.length; i++) {
           obj[cols[i]] = row.c[i] ? row.c[i].v : "";
         }
         return obj;
@@ -218,7 +245,7 @@
 
     function getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment) {
       let finalDate = new Date(firstPaymentDate);
-      let months = Math.ceil(totalAmount / monthlyPayment);
+      const months = Math.ceil(totalAmount / monthlyPayment);
       finalDate.setMonth(finalDate.getMonth() + months - 1);
       return finalDate;
     }
@@ -238,10 +265,10 @@
     function getNextPaymentAmount(totalAmount, balance, monthlyPayment) {
       if (balance <= 0) return "0.00";
       if (balance < monthlyPayment) return balance.toFixed(2);
-      let totalPaid = totalAmount - balance;
-      let paymentsMade = Math.floor(totalPaid / monthlyPayment);
-      let expectedPaid = paymentsMade * monthlyPayment;
-      let overpayment = totalPaid - expectedPaid;
+      const totalPaid = totalAmount - balance;
+      const paymentsMade = Math.floor(totalPaid / monthlyPayment);
+      const expectedPaid = paymentsMade * monthlyPayment;
+      const overpayment = totalPaid - expectedPaid;
       let nextPayment = monthlyPayment - overpayment;
       if (nextPayment < 0) nextPayment = 0;
       return Math.min(monthlyPayment, nextPayment, balance).toFixed(2);
@@ -249,10 +276,9 @@
 
     // Функция расчёта оставшихся платежей
     function getRemainingPayments(totalAmount, balance, monthlyPayment) {
-      let totalPayments = Math.ceil(totalAmount / monthlyPayment);
-      let paymentsMade = Math.floor((totalAmount - balance) / monthlyPayment);
-      let remainingPayments = totalPayments - paymentsMade;
-      return remainingPayments;
+      const totalPayments = Math.ceil(totalAmount / monthlyPayment);
+      const paymentsMade = Math.floor((totalAmount - balance) / monthlyPayment);
+      return totalPayments - paymentsMade;
     }
 
     function getDynamicColor(percent) {
@@ -263,31 +289,31 @@
         g = Math.round(53 + (percent / 50) * (193 - 53));
         b = Math.round(69 - (percent / 50) * (69 - 7));
       } else {
-        percent = percent - 50;
-        r = Math.round(255 - (percent / 50) * (255 - 40));
-        g = Math.round(193 + (percent / 50) * (167 - 193));
-        b = Math.round(7 + (percent / 50) * (69 - 7));
+        const adjusted = percent - 50;
+        r = Math.round(255 - (adjusted / 50) * (255 - 40));
+        g = Math.round(193 + (adjusted / 50) * (167 - 193));
+        b = Math.round(7 + (adjusted / 50) * (69 - 7));
       }
       return `rgb(${r}, ${g}, ${b})`;
     }
 
     function updateCardBalance(card, newBalance, totalAmount, monthlyPayment) {
       card.querySelector('.info .highlight.balance').textContent = newBalance.toFixed(2) + " ₽";
-      let percentPaid = totalAmount > 0 ? ((totalAmount - newBalance) / totalAmount) * 100 : 0;
-      let progressFill = card.querySelector('.progress-fill');
+      const percentPaid = totalAmount > 0 ? ((totalAmount - newBalance) / totalAmount) * 100 : 0;
+      const progressFill = card.querySelector('.progress-fill');
       progressFill.style.width = percentPaid.toFixed(2) + "%";
       progressFill.style.background = getDynamicColor(percentPaid);
-      let firstPaymentDate = parseDate(card.dataset.firstPaymentDate);
-      let nextPaymentDate = getNextPaymentDate(firstPaymentDate, totalAmount, newBalance, monthlyPayment);
-      let nextPaymentAmount = getNextPaymentAmount(totalAmount, newBalance, monthlyPayment);
+      const firstPaymentDate = parseDate(card.dataset.firstPaymentDate);
+      const nextPaymentDate = getNextPaymentDate(firstPaymentDate, totalAmount, newBalance, monthlyPayment);
+      const nextPaymentAmount = getNextPaymentAmount(totalAmount, newBalance, monthlyPayment);
       card.querySelector('.payment .highlight.nextAmount').textContent = nextPaymentAmount + " ₽";
       card.querySelector('.date .highlight.nextDate').textContent = nextPaymentDate;
       // Обновляем оставшиеся платежи
-      let remainingPayments = getRemainingPayments(totalAmount, newBalance, monthlyPayment);
+      const remainingPayments = getRemainingPayments(totalAmount, newBalance, monthlyPayment);
       card.querySelector('.remaining .highlight.remainingCount').textContent = remainingPayments;
-      if(newBalance <= 0){
-        let repaymentSection = card.querySelector('.repayment-section');
-        if(repaymentSection) repaymentSection.style.display = 'none';
+      if (newBalance <= 0) {
+        const repaymentSection = card.querySelector('.repayment-section');
+        if (repaymentSection) repaymentSection.style.display = 'none';
       }
     }
 
@@ -305,29 +331,29 @@
         })
       })
       .then(() => {
-        callback(null, {status: "success"});
+        callback(null, { status: "success" });
       })
       .catch(err => callback(err));
     }
 
     function populateCards(data) {
-      var container = document.getElementById('installmentsContainer');
+      const container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
       // Сортируем данные так, чтобы карточки с меньшим rowIndex (новые) шли первыми
       data.sort((a, b) => a.rowIndex - b.rowIndex);
       data.forEach(function(row) {
-        var товар = row["Товар"] || "";
-        var контора = row["Контора"] || "";
-        var общаяСумма = parseFloat(row["Общая сумма"]) || 0;
-        var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
-        var датаПервойВыплаты = parseDate(row["Дата первой выплаты"] || "01.01.2024");
-        var баланс = parseFloat(row["Остаток выплаты"]) || 0;
-        var percentPaid = общаяСумма > 0 ? ((общаяСумма - баланс) / общаяСумма) * 100 : 0;
-        var nextPaymentDate = getNextPaymentDate(датаПервойВыплаты, общаяСумма, баланс, ежемесячная);
-        var nextPaymentAmount = getNextPaymentAmount(общаяСумма, баланс, ежемесячная);
-        var remainingPayments = getRemainingPayments(общаяСумма, баланс, ежемесячная);
+        const товар = row["Товар"] || "";
+        const контора = row["Контора"] || "";
+        const общаяСумма = parseFloat(row["Общая сумма"]) || 0;
+        const ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
+        const датаПервойВыплаты = parseDate(row["Дата первой выплаты"] || "01.01.2024");
+        const баланс = parseFloat(row["Остаток выплаты"]) || 0;
+        const percentPaid = общаяСумма > 0 ? ((общаяСумма - баланс) / общаяСумма) * 100 : 0;
+        const nextPaymentDate = getNextPaymentDate(датаПервойВыплаты, общаяСумма, баланс, ежемесячная);
+        const nextPaymentAmount = getNextPaymentAmount(общаяСумма, баланс, ежемесячная);
+        const remainingPayments = getRemainingPayments(общаяСумма, баланс, ежемесячная);
         
-        var card = document.createElement('div');
+        const card = document.createElement('article');
         card.classList.add('card');
         card.dataset.rowIndex = row.rowIndex;
         card.dataset.firstPaymentDate = датаПервойВыплаты;
@@ -352,8 +378,8 @@
           </div>
         `;
         
-        if(баланс > 0){
-          var repaymentSection = document.createElement('div');
+        if (баланс > 0) {
+          const repaymentSection = document.createElement('div');
           repaymentSection.classList.add('repayment-section');
           repaymentSection.innerHTML = `
             <button class="repayment-btn">Погашение</button>
@@ -369,38 +395,38 @@
             // Анимация свечения карточки при нажатии на кнопку
             card.classList.add('glow');
             setTimeout(() => card.classList.remove('glow'), 500);
-            var form = repaymentSection.querySelector('.payment-form');
+            const form = repaymentSection.querySelector('.payment-form');
             form.style.display = form.style.display === "block" ? "none" : "block";
           });
           
           repaymentSection.querySelector('.pay-btn').addEventListener('click', function() {
-            var rublesInput = repaymentSection.querySelector('.payment-input-rubles');
-            var kopeksInput = repaymentSection.querySelector('.payment-input-kopeks');
-            var rubles = parseInt(rublesInput.value);
-            var kopeksValue = kopeksInput.value.trim();
-            var kopeks = kopeksValue === "" ? 0 : parseInt(kopeksValue);
+            const rublesInput = repaymentSection.querySelector('.payment-input-rubles');
+            const kopeksInput = repaymentSection.querySelector('.payment-input-kopeks');
+            const rubles = parseInt(rublesInput.value);
+            const kopeksValue = kopeksInput.value.trim();
+            const kopeks = kopeksValue === "" ? 0 : parseInt(kopeksValue);
             
             if (isNaN(rubles) || rubles < 0 || isNaN(kopeks) || kopeks < 0 || kopeks > 99) {
               alert("Введите корректную сумму оплаты");
               return;
             }
             
-            var paymentValue = parseFloat(rubles + "." + (kopeks < 10 ? "0" : "") + kopeks);
+            const paymentValue = parseFloat(rubles + "." + (kopeks < 10 ? "0" : "") + kopeks);
             if (paymentValue <= 0) {
               alert("Введите корректную сумму оплаты");
               return;
             }
             
-            var balanceElem = card.querySelector('.highlight.balance');
-            var currentBalanceText = balanceElem.textContent.replace(" ₽", "").replace(",", ".");
-            var currentBalance = parseFloat(currentBalanceText);
-            var newBalance = currentBalance - paymentValue;
+            const balanceElem = card.querySelector('.highlight.balance');
+            const currentBalanceText = balanceElem.textContent.replace(" ₽", "").replace(",", ".");
+            const currentBalance = parseFloat(currentBalanceText);
+            let newBalance = currentBalance - paymentValue;
             if (newBalance < 0) newBalance = 0;
             
             updateCardBalance(card, newBalance, общаяСумма, ежемесячная);
             
-            sendPayment(card.dataset.rowIndex, paymentValue, function(err, result){
-              if(err || result.status !== "success"){
+            sendPayment(card.dataset.rowIndex, paymentValue, function(err, result) {
+              if (err || result.status !== "success") {
                 alert("Ошибка при оплате: " + (err ? err : result.message));
                 return;
               }
@@ -417,7 +443,7 @@
     }
 
     (function() {
-      var script = document.createElement('script');
+      const script = document.createElement('script');
       script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json&callback=handleData";
       document.body.appendChild(script);
     })();
