@@ -2,12 +2,16 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <!-- Адаптация для мобильных устройств -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Настройка адаптивности для мобильных устройств -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Новая рассрочка</title>
   <!-- Подключение шрифта Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    /* Глобальное правило для корректного расчёта размеров */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       padding: 0;
@@ -16,10 +20,10 @@
       color: #333;
     }
     .form-container {
-      margin: 40px auto;
-      padding: 30px;
       width: 95%;
       max-width: 500px;
+      margin: 20px auto;
+      padding: 20px;
       background-color: #fff;
       border: 1px solid #ddd;
       border-radius: 10px;
@@ -28,22 +32,23 @@
     .form-container h2 {
       text-align: center;
       margin-bottom: 20px;
+      font-size: 24px;
       color: #333;
     }
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     .form-group label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
       font-weight: 500;
+      font-size: 14px;
     }
     .form-group input {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 5px;
-      box-sizing: border-box;
       font-size: 16px;
     }
     .readonly {
@@ -53,21 +58,23 @@
     .button-group {
       display: flex;
       justify-content: space-between;
+      flex-wrap: wrap;
     }
     #submitBtn, #backBtn {
-      flex: 1;
-      padding: 12px 0;
+      flex: 1 1 48%;
+      padding: 12px;
       font-size: 16px;
       font-weight: 500;
       border: none;
       border-radius: 5px;
       cursor: pointer;
       transition: background-color 0.3s;
+      margin-top: 10px;
     }
     #submitBtn {
       background-color: #28a745;
       color: #fff;
-      margin-right: 10px;
+      margin-right: 4%;
     }
     #submitBtn:hover {
       background-color: #218838;
@@ -80,15 +87,12 @@
       background-color: #c82333;
     }
     @media (max-width: 480px) {
-      .form-container {
-        margin: 20px auto;
-        padding: 20px;
-      }
       .button-group {
         flex-direction: column;
       }
       #submitBtn, #backBtn {
-        margin: 5px 0;
+        flex: 1 1 100%;
+        margin-right: 0;
       }
     }
   </style>
@@ -228,7 +232,7 @@
       });
     });
 
-    // Обработчик кнопки Назад: перенаправление на главную страницу (index.html)
+    // Кнопка "Назад" перенаправляет на главную страницу
     document.getElementById('backBtn').addEventListener('click', function() {
       window.location.href = 'index.html';
     });
