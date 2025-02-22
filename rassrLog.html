@@ -113,6 +113,16 @@
     .payment-form input {
       padding: 4px;
       margin-right: 8px;
+      font-size: 14px;
+    }
+    /* Скрываем стрелки у input[type=number] */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
     }
     @media (max-width: 480px) {
       .container {
@@ -325,7 +335,7 @@
             <button class="repayment-btn">Погашение</button>
             <div class="payment-form">
               <input type="number" min="0" placeholder="Рубли" class="payment-input-rubles" style="width:80px;">
-              <input type="number" min="0" max="99" placeholder="Копейки" class="payment-input-kopeks" style="width:60px;">
+              <input type="number" min="0" max="99" placeholder="Копейки (необязательно)" class="payment-input-kopeks" style="width:60px;">
               <button class="pay-btn">Оплатить</button>
             </div>
           `;
@@ -343,7 +353,9 @@
             var kopeksInput = repaymentSection.querySelector('.payment-input-kopeks');
             
             var rubles = parseInt(rublesInput.value);
-            var kopeks = parseInt(kopeksInput.value);
+            // Если поле копеек пустое, принимаем 0
+            var kopeksValue = kopeksInput.value.trim();
+            var kopeks = kopeksValue === "" ? 0 : parseInt(kopeksValue);
             
             // Проверка корректности введённых данных
             if (isNaN(rubles) || rubles < 0 || isNaN(kopeks) || kopeks < 0 || kopeks > 99) {
