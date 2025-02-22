@@ -41,12 +41,7 @@
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 16px;
     }
-    /* Анимация появления карточки */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    /* Стиль карточки с эффектом отражения */
+    /* Стиль карточки без анимаций */
     article.card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -55,12 +50,13 @@
       box-shadow: 0 4px 12px var(--shadow-color);
       position: relative;
       overflow: hidden;
-      animation: fadeIn 0.5s ease forwards;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      /* Убраны свойства анимации и перехода появления */
+      transition: none;
     }
     article.card:hover {
-      transform: translateY(-4px) scale(1.01);
-      box-shadow: 0 8px 16px var(--shadow-color);
+      /* Можно оставить легкий эффект увеличения, если нужно, или убрать его полностью */
+      transform: none;
+      box-shadow: 0 4px 12px var(--shadow-color);
     }
     article.card::after {
       content: "";
@@ -122,7 +118,8 @@
     }
     .progress-fill {
       height: 100%;
-      transition: width 0.5s ease, background-color 0.5s ease;
+      /* Убраны свойства transition, если не нужны плавные изменения */
+      transition: none;
     }
     .progress-percent {
       font-size: 13px;
@@ -145,14 +142,10 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
-      transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+      transition: none;
     }
     .repayment-btn:hover, .pay-btn:hover {
       background-color: var(--primary-hover);
-      transform: scale(1.03);
-    }
-    .repayment-btn:active, .pay-btn:active {
-      transform: scale(0.97);
     }
     .payment-form {
       margin-top: 12px;
@@ -167,21 +160,13 @@
       background: #333;
       color: var(--text-color);
       width: 80px;
-      transition: border-color 0.3s;
+      transition: none;
     }
     .payment-form input:focus {
       border-color: var(--primary-color);
       outline: none;
     }
-    /* Анимация свечения карточки при нажатии на кнопки */
-    .card.glow {
-      animation: glowAnimation 0.5s ease-out;
-    }
-    @keyframes glowAnimation {
-      0% { box-shadow: 0 0 0px rgba(0, 188, 212, 0); }
-      50% { box-shadow: 0 0 20px rgba(0, 188, 212, 0.8); }
-      100% { box-shadow: 0 4px 12px var(--shadow-color); }
-    }
+    /* Убран эффект свечения (класс .glow и keyframes) */
     @media (max-width: 480px) {
       .container {
         display: flex;
@@ -196,7 +181,6 @@
   </style>
 </head>
 <body>
-  <!-- JSONP callback для получения данных из Google Sheets -->
   <script>
     window.google = {
       visualization: {
@@ -274,7 +258,6 @@
       return Math.min(monthlyPayment, nextPayment, balance).toFixed(2);
     }
 
-    // Функция расчёта оставшихся платежей
     function getRemainingPayments(totalAmount, balance, monthlyPayment) {
       const totalPayments = Math.ceil(totalAmount / monthlyPayment);
       const paymentsMade = Math.floor((totalAmount - balance) / monthlyPayment);
@@ -308,7 +291,6 @@
       const nextPaymentAmount = getNextPaymentAmount(totalAmount, newBalance, monthlyPayment);
       card.querySelector('.payment .highlight.nextAmount').textContent = nextPaymentAmount + " ₽";
       card.querySelector('.date .highlight.nextDate').textContent = nextPaymentDate;
-      // Обновляем оставшиеся платежи
       const remainingPayments = getRemainingPayments(totalAmount, newBalance, monthlyPayment);
       card.querySelector('.remaining .highlight.remainingCount').textContent = remainingPayments;
       if (newBalance <= 0) {
@@ -339,7 +321,6 @@
     function populateCards(data) {
       const container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
-      // Сортируем данные так, чтобы карточки с меньшим rowIndex (новые) шли первыми
       data.sort((a, b) => a.rowIndex - b.rowIndex);
       data.forEach(function(row) {
         const товар = row["Товар"] || "";
@@ -392,9 +373,7 @@
           card.appendChild(repaymentSection);
           
           repaymentSection.querySelector('.repayment-btn').addEventListener('click', function() {
-            // Анимация свечения карточки при нажатии на кнопку
-            card.classList.add('glow');
-            setTimeout(() => card.classList.remove('glow'), 500);
+            // Убираем анимацию свечения – просто переключаем видимость формы
             const form = repaymentSection.querySelector('.payment-form');
             form.style.display = form.style.display === "block" ? "none" : "block";
           });
