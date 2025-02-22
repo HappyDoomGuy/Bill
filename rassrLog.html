@@ -107,6 +107,7 @@
 </head>
 <body>
   <script>
+    // JSONP callback для получения данных из Google Sheets
     window.google = {
       visualization: {
         Query: {
@@ -122,13 +123,14 @@
   <div class="container" id="installmentsContainer"></div>
 
   <script>
+    // Функция для обработки ответа и вызова функции отображения карточек
     function handleData(response) {
       if (!response || !response.table) {
         console.error("Ошибка: Нет данных в ответе");
         return;
       }
-      var cols = response.table.cols.map(function(col) { return col.label; });
-      var data = response.table.rows.map(function(row) {
+      var cols = response.table.cols.map(col => col.label);
+      var data = response.table.rows.map(row => {
         var obj = {};
         for (var i = 0; i < cols.length; i++) {
           obj[cols[i]] = row.c[i] ? row.c[i].v : "";
@@ -138,7 +140,7 @@
       populateCards(data);
     }
 
-    // ✅ Функция для преобразования строки в дату
+    // Функция для преобразования строки в объект Date
     function parseDate(dateStr) {
       if (!dateStr) return null;
       dateStr = dateStr.trim();
@@ -151,7 +153,7 @@
       }
     }
 
-    // ✅ Функция для расчёта даты финальной выплаты
+    // Функция расчёта даты финальной выплаты (фиксированная)
     function getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment) {
       let finalDate = new Date(firstPaymentDate);
       let months = Math.ceil(totalAmount / monthlyPayment);
@@ -159,16 +161,18 @@
       return finalDate;
     }
 
-    // ✅ Функция для расчёта даты следующей выплаты с учётом переплаты
+    // Функция расчёта даты следующей выплаты
+    // Дата следующей выплаты = дата первой выплаты + количество оплаченных месяцев (полных платежей)
+    // Если рассчитанная дата уже прошла, добавляем ещё месяц
     function getNextPaymentDate(firstPaymentDate, totalAmount, balance, monthlyPayment) {
       const today = new Date();
       const finalDate = getFinalPaymentDate(firstPaymentDate, totalAmount, monthlyPayment);
 
       if (balance <= 0) return "Выплата завершена";
 
-      let monthsPaidAhead = Math.floor((totalAmount - balance) / monthlyPayment);
+      let paymentsMade = Math.floor((totalAmount - balance) / monthlyPayment);
       let nextPaymentDate = new Date(firstPaymentDate);
-      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsPaidAhead);
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + paymentsMade);
 
       if (nextPaymentDate > finalDate) return finalDate.toLocaleDateString('ru-RU');
       if (nextPaymentDate <= today) nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
@@ -176,12 +180,27 @@
       return nextPaymentDate.toLocaleDateString('ru-RU');
     }
 
-    // ✅ Функция для расчёта суммы следующей выплаты (фиксированная сумма, кроме последнего месяца)
-    function getNextPaymentAmount(balance, monthlyPayment) {
-      return balance > monthlyPayment ? monthlyPayment.toFixed(2) : balance.toFixed(2);
+    // Функция расчёта суммы следующей выплаты с учётом переплаты
+    // Расчёт:
+    // totalPaid = общая сумма - остаток
+    // paymentsMade = Math.floor(totalPaid / monthlyPayment)
+    // expectedPaid = paymentsMade * monthlyPayment
+    // overpayment = totalPaid - expectedPaid
+    // nextPayment = monthlyPayment - overpayment, но не больше monthlyPayment и не больше остатка
+    function getNextPaymentAmount(totalAmount, balance, monthlyPayment) {
+      if (balance <= 0) return "0.00";
+      if (balance < monthlyPayment) return balance.toFixed(2);
+      let totalPaid = totalAmount - balance;
+      let paymentsMade = Math.floor(totalPaid / monthlyPayment);
+      let expectedPaid = paymentsMade * monthlyPayment;
+      let overpayment = totalPaid - expectedPaid;
+      let nextPayment = monthlyPayment - overpayment;
+      if (nextPayment < 0) nextPayment = 0;
+      // Следующий платеж не может быть больше ежемесячного платежа и не больше остатка
+      return Math.min(monthlyPayment, nextPayment, balance).toFixed(2);
     }
 
-    // ✅ Цвет прогресса
+    // Функция для динамического цвета прогресса
     function getDynamicColor(percent) {
       if (percent >= 100) return 'linear-gradient(90deg, #b0b0b0, #d6d6d6, #b0b0b0)';
       let r, g, b;
@@ -198,37 +217,43 @@
       return `rgb(${r}, ${g}, ${b})`;
     }
 
-    // ✅ Функция для отображения карточек
+    // Функция для отображения карточек
     function populateCards(data) {
       var container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
-      data.forEach(function (row) {
+      data.forEach(function(row) {
         var товар = row["Товар"] || "";
         var контора = row["Контора"] || "";
         var общаяСумма = parseFloat(row["Общая сумма"]) || 0;
-        var остаток = parseFloat(row["Остаток выплаты"]) || 0;
         var ежемесячная = parseFloat(row["Ежемесячная выплата"]) || 0;
+        var количествоВыплат = parseFloat(row["Количество выплат"]) || 0;
         var датаПервойВыплаты = parseDate(row["Дата первой выплаты"] || "01.01.2024");
+        var баланс = parseFloat(row["Остаток выплаты"]) || 0;
 
-        var процентВыплачено = общаяСумма > 0 ? ((общаяСумма - остаток) / общаяСумма) * 100 : 0;
+        // Процент выплачено
+        var percentPaid = общаяСумма > 0 ? ((общаяСумма - баланс) / общаяСумма) * 100 : 0;
 
-        // ✅ Дата и сумма следующей выплаты
-        var датаСледующейВыплаты = getNextPaymentDate(датаПервойВыплаты, общаяСумма, остаток, ежемесячная);
-        var суммаБлижайшей = getNextPaymentAmount(остаток, ежемесячная);
+        // Дата следующей выплаты
+        var nextPaymentDate = getNextPaymentDate(датаПервойВыплаты, общаяСумма, баланс, ежемесячная);
+        // Сумма следующей выплаты с учётом переплаты
+        var nextPaymentAmount = getNextPaymentAmount(общаяСумма, баланс, ежемесячная);
 
         var card = document.createElement('div');
         card.classList.add('card');
         card.innerHTML = `
           <h2>${товар}</h2>
           <h3>${контора}</h3>
-          <div class="info"><span>Сумма: <span class="highlight">${общаяСумма.toFixed(2)} ₽</span></span><span>Остаток: <span class="highlight">${остаток.toFixed(2)} ₽</span></span></div>
-          <div class="payment">Сумма следующей выплаты: <span class="highlight">${суммаБлижайшей} ₽</span></div>
-          <div class="date">Дата следующей выплаты: <span class="highlight">${датаСледующейВыплаты}</span></div>
+          <div class="info">
+            <span>Сумма: <span class="highlight">${общаяСумма.toFixed(2)} ₽</span></span>
+            <span>Остаток: <span class="highlight">${баланс.toFixed(2)} ₽</span></span>
+          </div>
+          <div class="payment">Сумма следующей выплаты: <span class="highlight">${nextPaymentAmount} ₽</span></div>
+          <div class="date">Дата следующей выплаты: <span class="highlight">${nextPaymentDate}</span></div>
           <div class="progress-container">
             <div class="progress-bar">
-              <div class="progress-fill" style="width: ${процентВыплачено.toFixed(2)}%; background: ${getDynamicColor(процентВыплачено)};"></div>
+              <div class="progress-fill" style="width: ${percentPaid.toFixed(2)}%; background: ${getDynamicColor(percentPaid)};"></div>
             </div>
-            <span class="progress-percent">${процентВыплачено.toFixed(2)}%</span>
+            <span class="progress-percent">${percentPaid.toFixed(2)}%</span>
           </div>`;
         container.appendChild(card);
       });
@@ -236,6 +261,7 @@
 
     (function() {
       var script = document.createElement('script');
+      // Замените идентификатор на ваш
       script.src = "https://docs.google.com/spreadsheets/d/1TlSRocotFp836gufQUFmDLScWF6j6guHvG2GQ54EJsk/gviz/tq?tqx=out:json&callback=handleData";
       document.body.appendChild(script);
     })();
