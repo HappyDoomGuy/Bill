@@ -8,64 +8,79 @@
   <style>
     body {
       font-family: 'Roboto', sans-serif;
-      background-color: #f5f7fa;
+      background-color: #121212;
       margin: 0;
       padding: 20px;
-      color: #333;
+      color: #e0e0e0;
     }
     h1 {
       text-align: center;
       margin-bottom: 20px;
+      color: #f5f5f5;
     }
+    /* Горизонтальная карусель */
     .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
       gap: 16px;
-      max-width: 1200px;
-      margin: 0 auto;
+      padding-bottom: 20px;
+    }
+    .container::-webkit-scrollbar {
+      height: 8px;
+    }
+    .container::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 4px;
     }
     .card {
-      background: #fff;
+      flex: 0 0 auto;
+      width: 300px;
+      background: #1e1e1e;
       border-radius: 10px;
       padding: 16px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-      border: 1px solid #e0e0e0;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      border: 1px solid #333;
       transition: all 0.3s ease;
       position: relative;
+      scroll-snap-align: start;
     }
     .card:hover {
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+      transform: translateY(-3px);
     }
     .card h2 {
       font-size: 18px;
       margin: 0;
-      color: #007bff;
+      color: #66ccff;
     }
     .card h3 {
       font-size: 16px;
       margin: 8px 0 12px;
-      color: #555;
+      color: #bbbbbb;
     }
     .info {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 14px;
-      color: #555;
       margin-bottom: 8px;
+    }
+    .info span {
+      color: #cccccc;
     }
     .highlight {
       font-weight: 500;
-      color: #333;
+      color: #ffffff;
     }
     .payment {
       font-size: 14px;
-      color: #28a745;
+      color: #66cc66;
       margin-bottom: 8px;
     }
     .date {
       font-size: 13px;
-      color: #555;
+      color: #aaaaaa;
       margin-bottom: 12px;
     }
     .progress-container {
@@ -76,7 +91,7 @@
     .progress-bar {
       height: 10px;
       border-radius: 5px;
-      background-color: #e9ecef;
+      background-color: #333;
       overflow: hidden;
       position: relative;
       width: 100%;
@@ -88,7 +103,7 @@
     .progress-percent {
       font-size: 12px;
       font-weight: bold;
-      color: #333;
+      color: #ffffff;
       white-space: nowrap;
       width: 50px;
       text-align: right;
@@ -97,14 +112,15 @@
       display: inline-block;
       margin-top: 10px;
       padding: 6px 12px;
-      background-color: #007bff;
-      color: #fff;
+      background-color: #66ccff;
+      color: #121212;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
     .repayment-btn:hover, .pay-btn:hover {
-      background-color: #0056b3;
+      background-color: #3399cc;
     }
     .payment-form {
       margin-top: 10px;
@@ -114,6 +130,10 @@
       padding: 4px;
       margin-right: 8px;
       font-size: 14px;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
     }
     /* Скрываем стрелки у input[type=number] */
     input[type=number]::-webkit-inner-spin-button, 
@@ -126,13 +146,10 @@
     }
     @media (max-width: 480px) {
       .container {
-        display: flex;
         flex-direction: column;
-        gap: 12px;
       }
       .card {
-        border-radius: 8px;
-        padding: 14px;
+        width: auto;
       }
     }
   </style>
@@ -221,7 +238,7 @@
 
     // Функция для динамического цвета прогресса
     function getDynamicColor(percent) {
-      if (percent >= 100) return 'linear-gradient(90deg, #b0b0b0, #d6d6d6, #b0b0b0)';
+      if (percent >= 100) return 'linear-gradient(90deg, #555, #777, #555)';
       let r, g, b;
       if (percent <= 50) {
         r = Math.round(220 + (percent / 50) * (255 - 220));
@@ -238,20 +255,16 @@
 
     // Функция для обновления карточки после оплаты
     function updateCardBalance(card, newBalance, totalAmount, monthlyPayment) {
-      // Обновляем текст остатка выплаты (текст с двумя знаками после запятой и с символом ₽)
       card.querySelector('.info .highlight.balance').textContent = newBalance.toFixed(2) + " ₽";
-      // Пересчитываем процент оплаты
       let percentPaid = totalAmount > 0 ? ((totalAmount - newBalance) / totalAmount) * 100 : 0;
       let progressFill = card.querySelector('.progress-fill');
       progressFill.style.width = percentPaid.toFixed(2) + "%";
       progressFill.style.background = getDynamicColor(percentPaid);
-      // Обновляем сумму и дату следующей выплаты
       let firstPaymentDate = parseDate(card.dataset.firstPaymentDate);
       let nextPaymentDate = getNextPaymentDate(firstPaymentDate, totalAmount, newBalance, monthlyPayment);
       let nextPaymentAmount = getNextPaymentAmount(totalAmount, newBalance, monthlyPayment);
       card.querySelector('.payment .highlight.nextAmount').textContent = nextPaymentAmount + " ₽";
       card.querySelector('.date .highlight.nextDate').textContent = nextPaymentDate;
-      // Если долг погашен, скрываем раздел погашения
       if(newBalance <= 0){
         let repaymentSection = card.querySelector('.repayment-section');
         if(repaymentSection) repaymentSection.style.display = 'none';
@@ -259,7 +272,6 @@
     }
 
     // Функция отправки оплаты на сервер (Google Apps Script)
-    // В режиме no-cors мы не можем получить ответ, поэтому полагаем, что запрос выполнен успешно
     function sendPayment(rowIndex, paymentAmount, callback) {
       const endpoint = "https://script.google.com/macros/s/AKfycby9SBPFZNpCRoBPr5azwCqlq_4tOm0pSIV4rZI_4p6KAk6TkoAQCEjrHQgThyz7-TI/exec";
       fetch(endpoint, {
@@ -274,7 +286,6 @@
         })
       })
       .then(() => {
-        // В режиме no-cors ответ opaque – считаем запрос успешным
         callback(null, {status: "success"});
       })
       .catch(err => callback(err));
@@ -297,7 +308,6 @@
         
         var card = document.createElement('div');
         card.classList.add('card');
-        // Сохраняем необходимые данные в data-атрибутах
         card.dataset.rowIndex = row.rowIndex;
         card.dataset.firstPaymentDate = датаПервойВыплаты;
         card.dataset.totalAmount = общаяСумма;
@@ -356,17 +366,14 @@
               return;
             }
             
-            // Считаем текущий баланс, удаляя лишние символы
             var balanceElem = card.querySelector('.highlight.balance');
             var currentBalanceText = balanceElem.textContent.replace(" ₽", "").replace(",", ".");
             var currentBalance = parseFloat(currentBalanceText);
             var newBalance = currentBalance - paymentValue;
             if (newBalance < 0) newBalance = 0;
             
-            // Обновляем UI сразу на клиенте
             updateCardBalance(card, newBalance, общаяСумма, ежемесячная);
             
-            // Отправляем на сервер только сумму платежа
             sendPayment(card.dataset.rowIndex, paymentValue, function(err, result){
               if(err || result.status !== "success"){
                 alert("Ошибка при оплате: " + (err ? err : result.message));
