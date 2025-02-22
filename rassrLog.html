@@ -60,9 +60,12 @@
     .payment {
       font-size: 14px;
       color: #28a745;
+      margin-bottom: 8px;
+    }
+    .date {
+      font-size: 13px;
+      color: #555;
       margin-bottom: 12px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 8px;
     }
     .progress-container {
       display: flex;
@@ -135,6 +138,26 @@
       populateCards(data);
     }
 
+    // ✅ Функция для вычисления даты следующей выплаты
+    function getNextPaymentDate(firstPaymentDateStr) {
+      const today = new Date();
+      const [day, month, year] = firstPaymentDateStr.split('.').map(Number); // Формат dd.mm.yyyy
+      let paymentDate = new Date(year, month - 1, day);
+
+      // Если первая выплата уже прошла, вычисляем следующую выплату
+      while (paymentDate <= today) {
+        paymentDate.setMonth(paymentDate.getMonth() + 1);
+
+        // Если день отсутствует в месяце (например, 31 февраля), выбираем последний день месяца
+        const lastDayOfMonth = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0).getDate();
+        if (paymentDate.getDate() > lastDayOfMonth) {
+          paymentDate.setDate(lastDayOfMonth);
+        }
+      }
+
+      return paymentDate.toLocaleDateString('ru-RU'); // Формат вывода: dd.mm.yyyy
+    }
+
     function populateCards(data) {
       var container = document.getElementById('installmentsContainer');
       container.innerHTML = "";
@@ -148,6 +171,10 @@
         суммаБлижайшей = isNaN(суммаБлижайшей) ? 0 : суммаБлижайшей;
 
         var процентВыплачено = общаяСумма > 0 ? ((общаяСумма - остаток) / общаяСумма) * 100 : 0;
+
+        // ✅ Дата следующей выплаты
+        var датаПервойВыплаты = row["Дата первой выплаты"] || "01.01.2024";
+        var датаСледующейВыплаты = getNextPaymentDate(датаПервойВыплаты);
 
         // ✅ Плавный переход от красного через жёлтый к зелёному и металлик на 100%
         function getDynamicColor(percent) {
@@ -173,6 +200,7 @@
           <h3>${контора}</h3>
           <div class="info"><span>Сумма: <span class="highlight">${общаяСумма.toFixed(2)} ₽</span></span><span>Остаток: <span class="highlight">${остаток.toFixed(2)} ₽</span></span></div>
           <div class="payment">Ближайшая выплата: <span class="highlight">${суммаБлижайшей.toFixed(2)} ₽</span></div>
+          <div class="date">Дата следующей выплаты: <span class="highlight">${датаСледующейВыплаты}</span></div>
           <div class="progress-container">
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${процентВыплачено.toFixed(2)}%; background: ${getDynamicColor(процентВыплачено)};"></div>
